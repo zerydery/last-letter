@@ -684,6 +684,32 @@ main.main {
   opacity: 1;
 }
 
+/* Tombol tandai tidak valid */
+.invalid-btn {
+  position: absolute;
+  top: 5px;
+  left: 7px;
+  background: none;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), transform var(--transition);
+  padding: 2px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.word-card:hover .invalid-btn {
+  opacity: 0.6;
+}
+
+.invalid-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.2);
+  background: rgba(255, 107, 107, 0.15);
+}
+
 /* No results */
 .no-results {
   grid-column: 1 / -1;

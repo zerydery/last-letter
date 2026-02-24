@@ -93,6 +93,7 @@ const EMBEDDED_WORDS = [
 let allWords = [];
 let filteredWords = [];
 let usedWords = new Set();
+let invalidWords = new Set(); // kata yg tidak valid di game
 let currentFilter = 'all';
 let currentSort = 'length-asc';
 let currentLetter = '';
@@ -148,8 +149,35 @@ function createParticles() {
 }
 
 // ---- INIT WORDS ----
-function initWords() {
-  // Normalize & deduplicate embedded list
+async function initWords() {
+  // Load invalid words dari localStorage dulu
+  loadInvalid();
+
+  // Coba fetch words.txt lokal (79K kata KBBI)
+  try {
+    const res = await fetch('./words.txt');
+    if (res.ok) {
+      const text = await res.text();
+      const loaded = text.split('\n')
+        .map(w => w.trim().toLowerCase())
+        .filter(w => /^[a-z]{2,}$/.test(w));
+      if (loaded.length > 1000) {
+        // Gabung dengan embedded list, deduplicate
+        const combined = new Set([...loaded, ...EMBEDDED_WORDS
+          .map(w => w.toString().toLowerCase().trim())
+          .filter(w => /^[a-z]{2,}$/.test(w))]);
+        allWords = [...combined].sort();
+        wordCountEl.textContent = `${allWords.length.toLocaleString('id-ID')} kata`;
+        const dot = totalWordsEl.querySelector('.stat-dot');
+        if (dot) dot.classList.remove('loading');
+        // Muat riwayat setelah kata siap
+        loadHistory();
+        return;
+      }
+    }
+  } catch { }
+
+  // Fallback: embedded list saja
   allWords = [...new Set(
     EMBEDDED_WORDS
       .map(w => w.toString().toLowerCase().trim())
@@ -159,38 +187,7 @@ function initWords() {
   wordCountEl.textContent = `${allWords.length.toLocaleString('id-ID')} kata`;
   const dot = totalWordsEl.querySelector('.stat-dot');
   if (dot) dot.classList.remove('loading');
-
-  // Muat riwayat tersimpan
   loadHistory();
-
-  // Try to load more words from API (background, bonus)
-  loadExtraWords();
-}
-
-async function loadExtraWords() {
-  const SOURCES = [
-    'https://cdn.jsdelivr.net/gh/raydenm/words-id@main/words.json',
-    'https://cdn.jsdelivr.net/gh/nicnocquee/words-id@main/words.json',
-  ];
-  for (const url of SOURCES) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
-      if (!res.ok) continue;
-      const data = await res.json();
-      let extra = Array.isArray(data) ? data : Object.keys(data);
-      extra = extra
-        .map(w => w.toString().toLowerCase().trim())
-        .filter(w => /^[a-z]{2,}$/.test(w));
-      if (extra.length > 500) {
-        const combined = new Set([...allWords, ...extra]);
-        allWords = [...combined].sort();
-        wordCountEl.textContent = `${allWords.length.toLocaleString('id-ID')} kata`;
-        // Re-render if currently searching
-        if (currentLetter) applyFilterSort();
-        break;
-      }
-    } catch { continue; }
-  }
 }
 
 // ---- EVENT LISTENERS ----
@@ -260,7 +257,7 @@ function applyFilterSort() {
   if (!currentLetter) return;
 
   let base = allWords.filter(w =>
-    w.startsWith(currentLetter) && !usedWords.has(w)
+    w.startsWith(currentLetter) && !usedWords.has(w) && !invalidWords.has(w)
   );
 
   switch (currentFilter) {
@@ -349,6 +346,7 @@ function createWordCard(word, index) {
 
   card.innerHTML = `
     <span class="copy-hint">📋 salin</span>
+    <button class="invalid-btn" title="Kata ini tidak valid di game">❌</button>
     <div class="word-text">
       <span class="highlight">${escHtml(prefix)}</span>${escHtml(rest)}
     </div>
@@ -358,7 +356,19 @@ function createWordCard(word, index) {
     </div>`;
 
   if (isHard) card.classList.add('card-hard');
-  card.addEventListener('click', () => handleWordClick(word, card));
+
+  // Klik kartu utama = salin & tandai terpakai
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.invalid-btn')) return; // jangan trigger jika klik tombol ❌
+    handleWordClick(word, card);
+  });
+
+  // Tombol ❌ = tandai tidak valid di game
+  card.querySelector('.invalid-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    markInvalid(word, card);
+  });
+
   return card;
 }
 
@@ -381,6 +391,34 @@ function handleWordClick(word, card) {
 
 // ---- HISTORY ----
 const LS_KEY = 'sambungkata_history';
+
+// ---- INVALID WORDS (tidak valid di game) ----
+const LS_INVALID_KEY = 'sambungkata_invalid';
+
+function markInvalid(word, card) {
+  invalidWords.add(word);
+  saveInvalid();
+  // Animasi hilang
+  card.style.transition = 'all 0.3s ease';
+  card.style.opacity = '0';
+  card.style.transform = 'scale(0.8)';
+  setTimeout(() => card.remove(), 300);
+  filteredWords = filteredWords.filter(w => w !== word);
+  showToast(`🚫 "${word}" ditandai tidak valid`);
+}
+
+function saveInvalid() {
+  try {
+    localStorage.setItem(LS_INVALID_KEY, JSON.stringify([...invalidWords]));
+  } catch { }
+}
+
+function loadInvalid() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_INVALID_KEY) || '[]');
+    if (Array.isArray(saved)) saved.forEach(w => invalidWords.add(w));
+  } catch { }
+}
 
 function saveHistory() {
   try {
