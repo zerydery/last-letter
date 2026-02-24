@@ -149,46 +149,30 @@ function createParticles() {
 }
 
 // ---- INIT WORDS ----
-async function initWords() {
+function initWords() {
   // Load invalid words dari localStorage dulu
   loadInvalid();
 
-  // Coba fetch words.txt lokal (79K kata KBBI)
-  try {
-    const res = await fetch('./words.txt');
-    if (res.ok) {
-      const text = await res.text();
-      const loaded = text.split('\n')
-        .map(w => w.trim().toLowerCase())
-        .filter(w => /^[a-z]{2,}$/.test(w));
-      if (loaded.length > 1000) {
-        // Gabung dengan embedded list, deduplicate
-        const combined = new Set([...loaded, ...EMBEDDED_WORDS
-          .map(w => w.toString().toLowerCase().trim())
-          .filter(w => /^[a-z]{2,}$/.test(w))]);
-        allWords = [...combined].sort();
-        wordCountEl.textContent = `${allWords.length.toLocaleString('id-ID')} kata`;
-        const dot = totalWordsEl.querySelector('.stat-dot');
-        if (dot) dot.classList.remove('loading');
-        // Muat riwayat setelah kata siap
-        loadHistory();
-        return;
-      }
-    }
-  } catch { }
+  // Gunakan KBBI_WORDS dari words.js (dimuat via <script> tag — no CORS)
+  const kbbi = (typeof window.KBBI_WORDS !== 'undefined' && Array.isArray(window.KBBI_WORDS))
+    ? window.KBBI_WORDS
+    : [];
 
-  // Fallback: embedded list saja
-  allWords = [...new Set(
-    EMBEDDED_WORDS
-      .map(w => w.toString().toLowerCase().trim())
-      .filter(w => /^[a-z]{2,}$/.test(w))
-  )].sort();
+  // Gabung KBBI + embedded list, deduplicate, sort
+  const embedded = EMBEDDED_WORDS
+    .map(w => w.toString().toLowerCase().trim())
+    .filter(w => /^[a-z]{2,}$/.test(w));
+
+  allWords = [...new Set([...kbbi, ...embedded])].sort();
 
   wordCountEl.textContent = `${allWords.length.toLocaleString('id-ID')} kata`;
   const dot = totalWordsEl.querySelector('.stat-dot');
   if (dot) dot.classList.remove('loading');
+
   loadHistory();
 }
+
+
 
 // ---- EVENT LISTENERS ----
 function setupEventListeners() {
