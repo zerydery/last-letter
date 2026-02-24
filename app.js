@@ -93,15 +93,25 @@ const EMBEDDED_WORDS = [
 let allWords = [];
 let filteredWords = [];
 let usedWords = new Set();
-let invalidWords = new Set(); // kata yg tidak valid di game
+let invalidWords = new Set();
 let currentFilter = 'all';
 let currentSort = 'length-asc';
+let currentDifficulty = 0; // 0=semua, 1=sulit, 2=sangat sulit, 3=ekstrem
 let currentLetter = '';
 let displayLimit = 60;
 let isShuffled = false;
 
-// Huruf akhir yang sulit untuk lawan (jarang kata yang berawalan huruf ini)
-const HARD_LETTERS = new Set(['q', 'x', 'z', 'f', 'v', 'y', 'c', 'w']);
+// Tingkat kesulitan huruf akhir (seberapa susah lawan cari kata berawalan huruf tsb)
+// 1 = Sulit 🔥  |  2 = Sangat Sulit 🔥🔥  |  3 = Ekstrem 🔥🔥🔥
+const DIFFICULTY_MAP = {
+  c: 1, g: 1, h: 1, o: 1, w: 1, y: 1,  // Level 1 — sulit
+  e: 2, f: 2, v: 2, x: 2,               // Level 2 — sangat sulit
+  q: 3, z: 3,                            // Level 3 — ekstrem
+};
+
+function getDifficulty(word) {
+  return DIFFICULTY_MAP[word.slice(-1)] || 0;
+}
 
 // ---- DOM refs ----
 const letterInput = document.getElementById('letterInput');
@@ -225,6 +235,20 @@ function setupEventListeners() {
       applyFilterSort();
     });
   });
+
+  document.querySelectorAll('.filter-chip[data-diff]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip[data-diff]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDifficulty = parseInt(btn.dataset.diff, 10);
+      displayLimit = 60;
+      isShuffled = false;
+      applyFilterSort();
+    });
+  });
+
+  const manageInvalidBtn = document.getElementById('manageInvalidBtn');
+  if (manageInvalidBtn) manageInvalidBtn.addEventListener('click', toggleBlacklist);
 }
 
 // ---- SEARCH ----
@@ -250,14 +274,18 @@ function applyFilterSort() {
     case 'long': base = base.filter(w => w.length >= 9); break;
   }
 
+  // Filter by difficulty level (independen dari sort)
+  if (currentDifficulty > 0) {
+    base = base.filter(w => getDifficulty(w) >= currentDifficulty);
+  }
+
   switch (currentSort) {
     case 'length-asc': base.sort((a, b) => a.length - b.length || a.localeCompare(b)); break;
     case 'length-desc': base.sort((a, b) => b.length - a.length || a.localeCompare(b)); break;
     case 'alpha': base.sort((a, b) => a.localeCompare(b)); break;
     case 'hard-first': base.sort((a, b) => {
-      const aHard = HARD_LETTERS.has(a.slice(-1)) ? 0 : 1;
-      const bHard = HARD_LETTERS.has(b.slice(-1)) ? 0 : 1;
-      return aHard - bHard || a.length - b.length;
+      const diff = getDifficulty(b) - getDifficulty(a); // tertinggi dulu
+      return diff !== 0 ? diff : a.length - b.length;
     }); break;
   }
 
@@ -325,8 +353,14 @@ function createWordCard(word, index) {
 
   const prefix = word.slice(0, currentLetter.length);
   const rest = word.slice(currentLetter.length);
-  const lastL = word.slice(-1);
-  const isHard = HARD_LETTERS.has(lastL);
+  const diff = getDifficulty(word);
+  const lastL = word.slice(-1).toUpperCase();
+
+  // Badge rendering berdasarkan level kesulitan
+  const BADGES = ['', '🔥', '🔥🔥', '🔥🔥🔥'];
+  const BADGE_LABELS = ['', 'badge-hard-1', 'badge-hard-2', 'badge-hard-3'];
+  const badgeClass = diff > 0 ? BADGE_LABELS[diff] : '';
+  const badgeIcon = diff > 0 ? BADGES[diff] : '↓';
 
   card.innerHTML = `
     <span class="copy-hint">📋 salin</span>
@@ -336,10 +370,10 @@ function createWordCard(word, index) {
     </div>
     <div class="word-footer">
       <span class="word-length">${word.length} huruf</span>
-      <span class="last-letter-badge ${isHard ? 'badge-hard' : ''}">${isHard ? '🔥' : '↓'}${lastL.toUpperCase()}</span>
+      <span class="last-letter-badge ${badgeClass}">${badgeIcon}${lastL}</span>
     </div>`;
 
-  if (isHard) card.classList.add('card-hard');
+  if (diff > 0) card.classList.add(`card-hard-${diff}`);
 
   // Klik kartu utama = salin & tandai terpakai
   card.addEventListener('click', (e) => {
@@ -403,6 +437,60 @@ function loadInvalid() {
     if (Array.isArray(saved)) saved.forEach(w => invalidWords.add(w));
   } catch { }
 }
+
+function toggleBlacklist() {
+  const panel = document.getElementById('blacklistPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  if (isOpen) { panel.style.display = 'none'; return; }
+
+  panel.innerHTML = '';
+  if (invalidWords.size === 0) {
+    panel.innerHTML = '<p class="blacklist-empty">Tidak ada kata yang ditandai tidak valid.</p>';
+    panel.style.display = 'block';
+    return;
+  }
+
+  const header = document.createElement('div');
+  header.className = 'blacklist-header';
+  header.innerHTML = `<span>\ud83d\udeab ${invalidWords.size} kata tidak valid</span>
+    <button class="reset-btn" id="restoreAllBtn">\u267b\ufe0f Pulihkan Semua</button>`;
+  panel.appendChild(header);
+
+  const list = document.createElement('div');
+  list.className = 'blacklist-list';
+  [...invalidWords].sort().forEach(word => {
+    const tag = document.createElement('div');
+    tag.className = 'blacklist-tag';
+    tag.innerHTML = `<span>\ud83d\udeab ${word}</span>
+      <button class="restore-btn" data-word="${word}" title="Pulihkan kata ini">\u21ba</button>`;
+    tag.querySelector('.restore-btn').addEventListener('click', () => restoreInvalid(word, tag));
+    list.appendChild(tag);
+  });
+  panel.appendChild(list);
+  panel.style.display = 'block';
+
+  document.getElementById('restoreAllBtn').addEventListener('click', () => {
+    invalidWords.clear();
+    saveInvalid();
+    panel.style.display = 'none';
+    if (currentLetter) applyFilterSort();
+    showToast('\u267b\ufe0f Semua kata invalid dipulihkan!');
+  });
+}
+
+function restoreInvalid(word, tagEl) {
+  invalidWords.delete(word);
+  saveInvalid();
+  tagEl.remove();
+  if (currentLetter) applyFilterSort();
+  showToast(`\u267b\ufe0f "${word}" dipulihkan`);
+  if (invalidWords.size === 0) {
+    const panel = document.getElementById('blacklistPanel');
+    if (panel) panel.style.display = 'none';
+  }
+}
+
 
 function saveHistory() {
   try {

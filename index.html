@@ -81,7 +81,18 @@
           <button class="filter-chip active" data-sort="length-asc">Terpendek</button>
           <button class="filter-chip" data-sort="length-desc">Terpanjang</button>
           <button class="filter-chip" data-sort="alpha">A–Z</button>
-          <button class="filter-chip" data-sort="hard-first">🔥 Sulit dulu</button>
+          <button class="filter-chip" data-sort="hard-first">🔥🔥🔥 Terberat</button>
+        </div>
+      </div>
+
+      <!-- Difficulty Filter -->
+      <div class="filter-row">
+        <span class="filter-label">Kesulitan:</span>
+        <div class="filter-chips">
+          <button class="filter-chip active" data-diff="0">Semua</button>
+          <button class="filter-chip diff-1" data-diff="1">🔥 Sulit</button>
+          <button class="filter-chip diff-2" data-diff="2">🔥🔥 Sangat Sulit</button>
+          <button class="filter-chip diff-3" data-diff="3">🔥🔥🔥 Ekstrem</button>
         </div>
       </div>
     </section>
@@ -118,9 +129,14 @@
     <section class="history-card glass-card" id="historyCard" style="display:none">
       <div class="history-header">
         <h2 class="history-title">📋 Riwayat Sesi</h2>
-        <button class="reset-btn" id="resetBtn">🗑 Reset Sesi</button>
+        <div class="history-actions">
+          <button class="reset-btn" id="manageInvalidBtn">🚫 Kata Tidak Valid</button>
+          <button class="reset-btn" id="resetBtn">🗑 Reset Sesi</button>
+        </div>
       </div>
       <p class="history-sub">Kata yang sudah dipakai — tidak akan muncul di hasil pencarian</p>
+      <!-- Blacklist Panel -->
+      <div id="blacklistPanel" style="display:none" class="blacklist-panel"></div>
       <div class="history-list" id="historyList"></div>
     </section>
 
@@ -135,7 +151,7 @@
   </footer>
 
   <script src="words.js"></script>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 
 </html>

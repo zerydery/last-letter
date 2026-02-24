@@ -640,19 +640,63 @@ main.main {
   white-space: nowrap;
 }
 
-/* Badge huruf sulit — membuat lawan kewalahan */
-.last-letter-badge.badge-hard {
+/* ---- DIFFICULTY BADGE SYSTEM ---- */
+
+/* Level 1 🔥 Sulit */
+.last-letter-badge.badge-hard-1 {
+  background: rgba(255, 183, 77, 0.18);
+  color: #ffb74d;
+  border-color: rgba(255, 183, 77, 0.35);
+}
+
+.word-card.card-hard-1 {
+  border-color: rgba(255, 183, 77, 0.15);
+}
+
+.word-card.card-hard-1:hover {
+  border-color: rgba(255, 183, 77, 0.45);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px rgba(255, 183, 77, 0.1);
+}
+
+/* Level 2 🔥🔥 Sangat Sulit */
+.last-letter-badge.badge-hard-2 {
   background: rgba(255, 107, 107, 0.18);
   color: var(--neon-red);
   border-color: rgba(255, 107, 107, 0.35);
-  animation: hardPulse 2s ease-in-out infinite;
+  animation: hardPulse 2.5s ease-in-out infinite;
+}
+
+.word-card.card-hard-2 {
+  border-color: rgba(255, 107, 107, 0.15);
+}
+
+.word-card.card-hard-2:hover {
+  border-color: rgba(255, 107, 107, 0.45);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px rgba(255, 107, 107, 0.12);
+}
+
+/* Level 3 🔥🔥🔥 Ekstrem */
+.last-letter-badge.badge-hard-3 {
+  background: rgba(180, 0, 255, 0.2);
+  color: #d481ff;
+  border-color: rgba(180, 0, 255, 0.4);
+  animation: extremePulse 1.5s ease-in-out infinite;
+}
+
+.word-card.card-hard-3 {
+  border-color: rgba(180, 0, 255, 0.15);
+}
+
+.word-card.card-hard-3:hover {
+  border-color: rgba(180, 0, 255, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 18px rgba(180, 0, 255, 0.2);
 }
 
 @keyframes hardPulse {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+    box-shadow: none;
   }
 
   50% {
@@ -660,14 +704,35 @@ main.main {
   }
 }
 
-/* Card dengan huruf akhir sulit */
-.word-card.card-hard {
-  border-color: rgba(255, 107, 107, 0.18);
+@keyframes extremePulse {
+
+  0%,
+  100% {
+    box-shadow: none;
+  }
+
+  50% {
+    box-shadow: 0 0 8px 3px rgba(180, 0, 255, 0.4);
+  }
 }
 
-.word-card.card-hard:hover {
-  border-color: rgba(255, 107, 107, 0.45);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px rgba(255, 107, 107, 0.12);
+/* Difficulty filter chip color overrides */
+.filter-chip.diff-1.active {
+  background: rgba(255, 183, 77, 0.2);
+  border-color: rgba(255, 183, 77, 0.5);
+  color: #ffb74d;
+}
+
+.filter-chip.diff-2.active {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.5);
+  color: var(--neon-red);
+}
+
+.filter-chip.diff-3.active {
+  background: rgba(180, 0, 255, 0.2);
+  border-color: rgba(180, 0, 255, 0.5);
+  color: #d481ff;
 }
 
 .copy-hint {
@@ -783,6 +848,74 @@ main.main {
 .reset-btn:hover {
   background: rgba(255, 107, 107, 0.16);
   border-color: var(--neon-red);
+}
+
+/* History header actions row */
+.history-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Blacklist Panel */
+.blacklist-panel {
+  margin: 10px 0;
+  padding: 12px;
+  background: rgba(255, 107, 107, 0.06);
+  border: 1px solid rgba(255, 107, 107, 0.15);
+  border-radius: 10px;
+}
+
+.blacklist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.blacklist-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px;
+  margin: 0;
+}
+
+.blacklist-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.blacklist-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 20px;
+  padding: 4px 10px 4px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.restore-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--neon-green);
+  padding: 0 2px;
+  transition: transform var(--transition);
+}
+
+.restore-btn:hover {
+  transform: rotate(-180deg);
 }
 
 .history-sub {
