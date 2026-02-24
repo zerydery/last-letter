@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sambung Kata Helper 🎮</title>
+  <meta name="description"
+    content="Helper cari kosakata untuk game Roblox Sambung Kata (Last Letter). Cari kata berdasarkan huruf terakhir dengan cepat!" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- Background particles -->
+  <div class="bg-particles" id="bgParticles"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🎮</span>
+        <div>
+          <h1 class="logo-title">Sambung Kata</h1>
+          <p class="logo-sub">Vocabulary Helper</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-chip" id="totalWords">
+          <span class="stat-dot loading"></span>
+          <span id="wordCount">Memuat...</span>
+        </div>
+        <div class="stat-chip session-chip">
+          <span>🔴 Sesi</span>
+          <span id="usedCount">0</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- Search Card -->
+    <section class="search-card glass-card">
+      <label class="search-label" for="letterInput">
+        Masukkan huruf terakhir kata lawan
+      </label>
+      <div class="search-row">
+        <div class="input-wrapper">
+          <span class="input-icon">🔤</span>
+          <input type="text" id="letterInput" class="letter-input" placeholder="contoh: a, ng, an..." maxlength="4"
+            autocomplete="off" autocapitalize="none" spellcheck="false" />
+          <button class="clear-btn" id="clearBtn" title="Hapus">✕</button>
+        </div>
+        <button class="search-btn" id="searchBtn">
+          <span>Cari</span>
+          <span class="btn-icon">→</span>
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-row">
+        <span class="filter-label">Filter panjang:</span>
+        <div class="filter-chips">
+          <button class="filter-chip active" data-filter="all">Semua</button>
+          <button class="filter-chip" data-filter="short">Pendek (≤5)</button>
+          <button class="filter-chip" data-filter="medium">Sedang (6-8)</button>
+          <button class="filter-chip" data-filter="long">Panjang (9+)</button>
+        </div>
+      </div>
+
+      <!-- Sort -->
+      <div class="filter-row">
+        <span class="filter-label">Urutkan:</span>
+        <div class="filter-chips">
+          <button class="filter-chip active" data-sort="length-asc">Terpendek</button>
+          <button class="filter-chip" data-sort="length-desc">Terpanjang</button>
+          <button class="filter-chip" data-sort="alpha">A–Z</button>
+          <button class="filter-chip" data-sort="hard-first">🔥 Sulit dulu</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section">
+      <div class="results-header">
+        <div class="results-meta" id="resultsMeta">
+          <span id="resultsInfo">Masukkan huruf untuk mulai</span>
+        </div>
+        <div class="results-actions" id="resultsActions" style="display:none">
+          <button class="action-btn" id="shuffleBtn" title="Acak urutan">🔀 Acak</button>
+        </div>
+      </div>
+
+      <!-- Results Grid -->
+      <div class="results-grid" id="resultsGrid">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">💡</div>
+          <p>Ketik huruf di atas untuk melihat saran kata</p>
+          <p class="empty-sub">Contoh: ketik <code>a</code> untuk kata berawalan "A"</p>
+        </div>
+      </div>
+
+      <!-- Load More -->
+      <div class="load-more-wrap" id="loadMoreWrap" style="display:none">
+        <button class="load-more-btn" id="loadMoreBtn">
+          Tampilkan lebih banyak <span id="remainingCount"></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- History Panel -->
+    <section class="history-card glass-card" id="historyCard" style="display:none">
+      <div class="history-header">
+        <h2 class="history-title">📋 Riwayat Sesi</h2>
+        <button class="reset-btn" id="resetBtn">🗑 Reset Sesi</button>
+      </div>
+      <p class="history-sub">Kata yang sudah dipakai — tidak akan muncul di hasil pencarian</p>
+      <div class="history-list" id="historyList"></div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>🎮 Dibuat untuk pemain Roblox <strong>Sambung Kata</strong> · Data kata dari dataset Bahasa Indonesia</p>
+  </footer>
+
+  <script src="app.js?v=5"></script>
+</body>
+
+</html>
