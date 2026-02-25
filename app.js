@@ -101,6 +101,18 @@ let currentLetter = '';
 let displayLimit = 60;
 let isShuffled = false;
 
+// ---- Dataset switch ----
+const DATASET_KEY = 'kbbi_dataset';
+const DATASETS = {
+  kbbi1: { label: 'Damzaky (71k)', desc: 'Dataset luas — kata turunan & umum' },
+  kbbi2: { label: 'KBBI Resmi (30k)', desc: 'Dataset murni dari database KBBI resmi' }
+};
+function getActiveDataset() { return localStorage.getItem(DATASET_KEY) || 'kbbi1'; }
+function switchDataset(id) {
+  localStorage.setItem(DATASET_KEY, id);
+  location.reload();
+}
+
 // Tingkat kesulitan huruf akhir (seberapa susah lawan cari kata berawalan huruf tsb)
 // 1 = Sulit 🔥  |  2 = Sangat Sulit 🔥🔥  |  3 = Ekstrem 🔥🔥🔥
 const DIFFICULTY_MAP = {
@@ -131,12 +143,15 @@ const totalWordsEl = document.getElementById('totalWords');
 const usedCountEl = document.getElementById('usedCount');
 const toast = document.getElementById('toast');
 const shuffleBtn = document.getElementById('shuffleBtn');
+const datasetToggleBtn = document.getElementById('datasetToggleBtn');
+const datasetLabelEl = document.getElementById('datasetLabel');
 
 // ---- INIT ----
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
   initWords();
   setupEventListeners();
+  initDatasetToggle();
 });
 
 // ---- PARTICLES ----
@@ -179,10 +194,51 @@ function initWords() {
   const dot = totalWordsEl.querySelector('.stat-dot');
   if (dot) dot.classList.remove('loading');
 
+  // Update dataset label di header
+  const activeDs = getActiveDataset();
+  if (datasetLabelEl) datasetLabelEl.textContent = DATASETS[activeDs]?.label || 'Sumber';
+
+  loadStats();
   loadHistory();
 }
+// ---- DATASET TOGGLE ----
+function initDatasetToggle() {
+  if (!datasetToggleBtn) return;
 
+  // Buat dropdown panel
+  const panel = document.createElement('div');
+  panel.id = 'datasetPanel';
+  panel.className = 'dataset-panel hidden';
 
+  const activeDs = getActiveDataset();
+  Object.entries(DATASETS).forEach(([id, info]) => {
+    const item = document.createElement('button');
+    item.className = 'dataset-option' + (id === activeDs ? ' active' : '');
+    item.innerHTML = `
+      <span class="dataset-option-check">${id === activeDs ? '✅' : '○'}</span>
+      <span class="dataset-option-info">
+        <strong>${info.label}</strong>
+        <small>${info.desc}</small>
+      </span>`;
+    item.addEventListener('click', () => {
+      if (id !== getActiveDataset()) switchDataset(id);
+      else panel.classList.add('hidden');
+    });
+    panel.appendChild(item);
+  });
+
+  datasetToggleBtn.parentElement.style.position = 'relative';
+  datasetToggleBtn.insertAdjacentElement('afterend', panel);
+
+  // Toggle dropdown
+  datasetToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.toggle('hidden');
+  });
+
+  // Tutup jika klik di luar
+  document.addEventListener('click', () => panel.classList.add('hidden'));
+}
 
 // ---- EVENT LISTENERS ----
 function setupEventListeners() {
@@ -249,6 +305,12 @@ function setupEventListeners() {
 
   const manageInvalidBtn = document.getElementById('manageInvalidBtn');
   if (manageInvalidBtn) manageInvalidBtn.addEventListener('click', toggleBlacklist);
+
+  const statsToggleBtn = document.getElementById('statsToggleBtn');
+  if (statsToggleBtn) statsToggleBtn.addEventListener('click', toggleStatsPanel);
+
+  const resetStatsBtn = document.getElementById('resetStatsBtn');
+  if (resetStatsBtn) resetStatsBtn.addEventListener('click', resetStatsConfirm);
 }
 
 // ---- SEARCH ----
@@ -258,6 +320,9 @@ function doSearch() {
   currentLetter = raw;
   displayLimit = 60;
   isShuffled = false;
+  // Catat huruf yang dicari untuk statistik
+  stats.letterCounts[raw] = (stats.letterCounts[raw] || 0) + 1;
+  saveStats();
   applyFilterSort();
 }
 
@@ -409,6 +474,18 @@ function handleWordClick(word, card) {
 
 // ---- HISTORY ----
 const LS_KEY = 'sambungkata_history';
+const LS_STATS = 'sambungkata_stats';
+
+const DEFAULT_STATS = {
+  totalWordsUsed: 0,
+  hardWordsUsed: 0,      // kata berakhiran huruf sulit
+  longestWord: '',
+  sessionsPlayed: 0,
+  letterCounts: {},      // { 'n': 12, 'b': 8, ... } huruf yang paling sering dicari
+  hardLetterUsed: {},    // { 'f': 3, 'x': 1 } berapa kali berhasil jebak lawan
+};
+
+let stats = { ...DEFAULT_STATS };
 
 // ---- INVALID WORDS (tidak valid di game) ----
 const LS_INVALID_KEY = 'sambungkata_invalid';
@@ -505,6 +582,15 @@ function loadHistory() {
     saved.forEach(word => {
       if (typeof word !== 'string') return;
       usedWords.add(word);
+      // Sync stats dari riwayat yang dimuat
+      stats.totalWordsUsed++;
+      const diff = getDifficulty(word);
+      if (diff > 0) {
+        stats.hardWordsUsed++;
+        const lastL = word.slice(-1);
+        stats.hardLetterUsed[lastL] = (stats.hardLetterUsed[lastL] || 0) + 1;
+      }
+      if (word.length > (stats.longestWord?.length || 0)) stats.longestWord = word;
       // Buat tag tanpa toast
       const tag = document.createElement('div');
       tag.className = 'history-tag';
@@ -524,6 +610,8 @@ function loadHistory() {
     });
     usedCountEl.textContent = usedWords.size;
     historyCard.style.display = 'block';
+    // Simpan stats yang telah disync
+    saveStats();
     showToast(`📂 ${usedWords.size} kata riwayat dimuat`);
   } catch { }
 }
@@ -532,6 +620,17 @@ function addToHistory(word) {
   usedWords.add(word);
   usedCountEl.textContent = usedWords.size;
   historyCard.style.display = 'block';
+
+  // Update statistik
+  stats.totalWordsUsed++;
+  const diff = getDifficulty(word);
+  if (diff > 0) {
+    stats.hardWordsUsed++;
+    const lastL = word.slice(-1);
+    stats.hardLetterUsed[lastL] = (stats.hardLetterUsed[lastL] || 0) + 1;
+  }
+  if (word.length > (stats.longestWord?.length || 0)) stats.longestWord = word;
+  saveStats();
 
   const tag = document.createElement('div');
   tag.className = 'history-tag';
@@ -567,6 +666,9 @@ function resetSession() {
     historyCard.style.display = 'none';
     if (currentLetter) applyFilterSort();
     showToast('🔄 Sesi direset!');
+    // Tambah jumlah sesi dimainkan
+    stats.sessionsPlayed++;
+    saveStats();
     btn.textContent = '🗑 Reset Sesi';
     btn.dataset.confirming = 'false';
     btn.style.background = '';
@@ -631,4 +733,103 @@ function showToast(msg, duration = 2000) {
 // ---- UTILS ----
 function escHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ============================================================
+// STATS SYSTEM
+// ============================================================
+function loadStats() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_STATS));
+    if (saved && typeof saved === 'object') {
+      stats = { ...DEFAULT_STATS, ...saved };
+    }
+  } catch { }
+}
+
+function saveStats() {
+  try { localStorage.setItem(LS_STATS, JSON.stringify(stats)); } catch { }
+}
+
+function toggleStatsPanel() {
+  const panel = document.getElementById('statsCard');
+  const btn = document.getElementById('statsToggleBtn');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  btn.textContent = isOpen ? '📊 Statistik' : '📊 Tutup';
+  if (!isOpen) renderStatsPanel();
+}
+
+function resetStatsConfirm() {
+  const btn = document.getElementById('resetStatsBtn');
+  if (btn.dataset.confirming === 'true') {
+    stats = { ...DEFAULT_STATS };
+    saveStats();
+    renderStatsPanel();
+    showToast('📊 Statistik direset!');
+    btn.textContent = '🗑 Reset Statistik';
+    btn.dataset.confirming = 'false';
+    btn.style.background = '';
+  } else {
+    btn.dataset.confirming = 'true';
+    btn.textContent = '⚠️ Yakin? Klik lagi';
+    btn.style.background = 'rgba(255,107,107,0.25)';
+    setTimeout(() => {
+      if (btn.dataset.confirming === 'true') {
+        btn.dataset.confirming = 'false';
+        btn.textContent = '🗑 Reset Statistik';
+        btn.style.background = '';
+      }
+    }, 3000);
+  }
+}
+
+function renderStatsPanel() {
+  const grid = document.getElementById('statsGrid');
+  if (!grid) return;
+
+  // Huruf paling sering dicari
+  const topLetter = Object.entries(stats.letterCounts)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  // Huruf jebakan yang paling sering berhasil
+  const topTrap = Object.entries(stats.hardLetterUsed)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  const items = [
+    { icon: '🏗️', label: 'Total Kata Dipakai', value: stats.totalWordsUsed.toLocaleString('id-ID') },
+    { icon: '🔄', label: 'Sesi Dimainkan', value: stats.sessionsPlayed.toLocaleString('id-ID') },
+    { icon: '🔥', label: 'Kata Jebakan Dipakai', value: stats.hardWordsUsed.toLocaleString('id-ID') },
+    {
+      icon: '🏆',
+      label: 'Kata Terpanjang',
+      value: stats.longestWord
+        ? `${stats.longestWord} (${stats.longestWord.length} huruf)`
+        : '—'
+    },
+    {
+      icon: '🔍',
+      label: 'Huruf Paling Sering Dicari',
+      value: topLetter
+        ? `"${topLetter[0].toUpperCase()}" (${topLetter[1]}x)`
+        : '—'
+    },
+    {
+      icon: '🎯',
+      label: 'Jebakan Andalan',
+      value: topTrap
+        ? `Berakhiran "${topTrap[0].toUpperCase()}" (${topTrap[1]}x)`
+        : '—'
+    },
+  ];
+
+  grid.innerHTML = items.map(item => `
+    <div class="stat-item">
+      <div class="stat-item-icon">${item.icon}</div>
+      <div class="stat-item-body">
+        <div class="stat-item-label">${item.label}</div>
+        <div class="stat-item-value">${item.value}</div>
+      </div>
+    </div>`).join('');
 }
