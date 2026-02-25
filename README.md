@@ -1,86 +1,97 @@
 <p align="center">
-  <img src="nexkata-logo.png" alt="nexkata logo" width="160" />
+  <img src="nexkata-logo.png" alt="nexkata" width="140" />
 </p>
 
 <h1 align="center">nexkata</h1>
-<p align="center"><strong>Sambung Kata Vocabulary Helper</strong> — cari kata KBBI selanjutnya dalam hitungan detik</p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/dataset-KBBI%2071k%20kata-00FFB3?style=flat-square" />
+  <strong>A real-time vocabulary helper for the Roblox Sambung Kata (Last Letter) word game</strong><br/>
+  Find valid Indonesian KBBI words instantly — filtered, sorted, and strategically rated.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/words-71k%20KBBI-00FFB3?style=flat-square" />
   <img src="https://img.shields.io/badge/offline-ready-4FC3F7?style=flat-square" />
-  <img src="https://img.shields.io/badge/stack-HTML%20%2B%20CSS%20%2B%20JS-B39DDB?style=flat-square" />
+  <img src="https://img.shields.io/badge/stack-HTML%20·%20CSS%20·%20JS-B39DDB?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-FFD54F?style=flat-square" />
 </p>
 
 ---
 
-**nexkata** adalah *vocabulary helper tool* untuk game Roblox **Sambung Kata** — permainan rantai kata bahasa Indonesia di mana setiap kata harus diawali huruf terakhir kata sebelumnya. Web ini membantu pemain menemukan kata valid berikutnya secara instan dari database KBBI, tanpa koneksi internet.
+## What is nexkata?
+
+**nexkata** is a browser-based tool built for players of the Roblox game **Sambung Kata** — a competitive Indonesian word-chaining game where each word must start with the last letter of the previous one.
+
+Type 1–4 letters and instantly get a filtered, sorted list of valid KBBI words. One click copies the word to your clipboard, ready to paste into Roblox.
 
 ---
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| 🔍 **Instant Search** | Real-time word lookup as you type (1–4 letters) |
-| 📚 **Dual KBBI Dataset** | Switch antara Damzaky (71k) dan KBBI Resmi (30k) |
-| 🔥 **Difficulty Levels** | Words rated by how hard the ending letter is for opponents |
-| ❌ **Invalid Word Blacklist** | Mark game-rejected words so they never appear again |
-| 💾 **Persistent History** | Session words saved to localStorage — survives page refresh |
-| 🔀 **Smart Sorting** | Sort by length (shortest/longest), A–Z, or hardest-ending-first |
-| 📋 **One-click Copy** | Click any word card to copy it to clipboard instantly |
-| 📱 **Mobile-first** | Fully responsive — optimized for phone use during gameplay |
-| 📊 **Session Statistics** | Track kata dipakai, kata sulit, dan kata terpanjang |
+| | Feature | Description |
+|---|---|---|
+| 🔍 | **Instant Search** | Real-time results as you type — no button needed |
+| 📚 | **Dual KBBI Dataset** | Switch between 71k (broad) and 30k (strict) word lists |
+| 🔥 | **Difficulty Ratings** | Words rated by how hard the ending letter is for your opponent |
+| ❌ | **Invalid Word Blacklist** | Mark rejected words — they'll never appear again |
+| 💾 | **Persistent Session** | Used words saved in localStorage across refreshes |
+| 🔀 | **Smart Sorting** | Sort by length, A–Z, or hardest-ending-first |
+| 📋 | **One-click Copy** | Click any word to instantly copy it to clipboard |
+| 📊 | **Session Statistics** | Track words used, hard picks, and your longest word |
+| 📱 | **Mobile-first** | Fully responsive — designed for phone use mid-game |
 
 ---
 
 ## Dataset Switch
 
-nexkata mendukung **2 sumber dataset KBBI** yang bisa dicapai via tombol di header:
+Click the **📚 dataset button** in the header to switch between two KBBI sources at any time. Your preference is saved locally.
 
-| Dataset | Jumlah Kata | Sumber | Keterangan |
-|---|---|---|---|
-| **Damzaky** | 71.278 kata | [damzaky/kumpulan-kata-bahasa-indonesia-KBBI](https://github.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI) | Dataset luas — kata turunan & umum |
-| **KBBI Resmi** | 30.452 kata | [nandalogina/kbbi-database](https://github.com/nandalogina/kbbi-database) | Murni dari database KBBI resmi |
+| Dataset | Words | Source |
+|---|---|---|
+| **Damzaky** *(default)* | 71,278 | [damzaky/kumpulan-kata-bahasa-indonesia-KBBI](https://github.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI) |
+| **KBBI Resmi** | 30,452 | [nandalogina/kbbi-database](https://github.com/nandalogina/kbbi-database) |
 
 ---
 
-## Difficulty Rating System
+## Difficulty System
 
-| Badge | Level | Ending Letters |
+Every word card shows how hard its ending letter is for your opponent to counter:
+
+| Rating | Ending Letters | Difficulty |
 |---|---|---|
-| `↓X` (blue) | Normal | a, b, d, i, j, k, l, m, n, p, r, s, t, u |
-| 🔥 | Hard | c, g, h, o, w, y |
-| 🔥🔥 | Very Hard | e, f, v, x |
-| 🔥🔥🔥 | Extreme | q, z |
+| *(none)* | a b d i j k l m n p r s t u | Normal |
+| 🔥 | c g h o w y | Hard |
+| 🔥🔥 | e f v x | Very Hard |
+| 🔥🔥🔥 | q z | Extreme — almost unbeatable |
 
-> **Pro tip:** Kata berakhiran `q` atau `z` hampir tidak bisa dilawan lawan — pakai saat mau menang!
+> **Strategy tip:** Words ending in `q` or `z` are nearly impossible to counter in standard Indonesian. Play them to end a round.
 
 ---
 
 ## How to Use
 
-1. Catat **huruf terakhir** kata yang dimainkan lawan
-2. Ketik huruf tersebut di kotak pencarian
-3. Browse hasil — urutkan **"🔥🔥🔥 Terberat"** untuk pilihan strategis
-4. Klik kata → otomatis **tersalin ke clipboard** dan ditandai sudah dipakai
-5. Paste langsung di Roblox chat!
+1. Note the **last letter** of your opponent's word
+2. Type it into the search box
+3. Sort by **🔥🔥🔥 Hardest** for the most strategic pick
+4. Click a word → it's **copied to clipboard** and marked as used
+5. Paste it directly into Roblox chat
 
 ---
 
 ## Tech Stack
 
-Pure **HTML + CSS + JavaScript** — no frameworks, no build step, no dependencies.
+Zero dependencies. No build step. Pure browser.
 
 ```
-├── index.html          # Application shell
+nexkata/
+├── index.html          # App shell & dynamic script loader
 ├── style.css           # Dark glassmorphism UI
-├── app.js              # Core logic & dataset switch
-├── words-kbbi1.js      # Dataset Damzaky 71k kata
-├── words-kbbi2.js      # Dataset KBBI Resmi 30k kata
-├── build-words.js      # Script build kbbi1 dari words.txt
-├── build-kbbi2.js      # Script build kbbi2 dari kbbi_kata.txt
-├── nexkata-logo.svg    # Logo vektor
+├── app.js              # Game logic, dataset switch, statistics
+├── words-kbbi1.js      # Damzaky dataset — 71,278 words
+├── words-kbbi2.js      # KBBI Resmi dataset — 30,452 words
+├── build-words.js      # CLI: regenerate words-kbbi1.js
+├── build-kbbi2.js      # CLI: regenerate words-kbbi2.js
+├── nexkata-logo.png    # App logo (favicon + header)
 └── netlify.toml        # Deployment config
 ```
 
@@ -89,27 +100,33 @@ Pure **HTML + CSS + JavaScript** — no frameworks, no build step, no dependenci
 ## Local Development
 
 ```bash
-# Clone the repo
 git clone https://github.com/zerydery/last-letter.git
 cd last-letter
 
-# Open in browser
+# Open directly in browser (no server needed)
 start index.html        # Windows
-open index.html         # macOS
+open index.html         # macOS / Linux
+```
+
+To rebuild a word dataset:
+
+```bash
+node build-words.js     # rebuild words-kbbi1.js from words.txt
+node build-kbbi2.js     # rebuild words-kbbi2.js from kbbi_kata.txt
 ```
 
 ---
 
 ## Deployment
 
-Static site — deploy anywhere:
+Static site — works anywhere:
 
-- **Netlify:** Connect GitHub repo, publish dir `/`
-- **Netlify Drop:** Drag folder ke [app.netlify.com/drop](https://app.netlify.com/drop)
-- **GitHub Pages:** Enable Pages pada branch `main`
+- **Netlify** (recommended): Connect GitHub → branch `main` → publish dir `/`
+- **GitHub Pages**: Enable Pages on `main` branch
+- **Netlify Drop**: Drag the project folder to [app.netlify.com/drop](https://app.netlify.com/drop)
 
 ---
 
 ## License
 
-MIT
+[MIT](LICENSE) © zerydery
