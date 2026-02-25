@@ -15,9 +15,7 @@ desktop.ini
 # Logs
 *.log
 
-# Build source files (tidak perlu di-repo, hanya untuk generate words-kbbi*.js)
+# Build source files (tidak perlu di-repo, hanya untuk generate ulang)
 words.txt
 kbbi_kata.txt
 
-# File lama (diganti words-kbbi1.js)
-words.js

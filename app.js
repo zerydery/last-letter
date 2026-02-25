@@ -101,17 +101,6 @@ let currentLetter = '';
 let displayLimit = 60;
 let isShuffled = false;
 
-// ---- Dataset switch ----
-const DATASET_KEY = 'kbbi_dataset';
-const DATASETS = {
-  kbbi1: { label: 'Damzaky (71k)', desc: 'Dataset luas — kata turunan & umum' },
-  kbbi2: { label: 'KBBI Resmi (30k)', desc: 'Dataset murni dari database KBBI resmi' }
-};
-function getActiveDataset() { return localStorage.getItem(DATASET_KEY) || 'kbbi1'; }
-function switchDataset(id) {
-  localStorage.setItem(DATASET_KEY, id);
-  location.reload();
-}
 
 // Tingkat kesulitan huruf akhir (seberapa susah lawan cari kata berawalan huruf tsb)
 // 1 = Sulit 🔥  |  2 = Sangat Sulit 🔥🔥  |  3 = Ekstrem 🔥🔥🔥
@@ -143,15 +132,12 @@ const totalWordsEl = document.getElementById('totalWords');
 const usedCountEl = document.getElementById('usedCount');
 const toast = document.getElementById('toast');
 const shuffleBtn = document.getElementById('shuffleBtn');
-const datasetToggleBtn = document.getElementById('datasetToggleBtn');
-const datasetLabelEl = document.getElementById('datasetLabel');
 
 // ---- INIT ----
 document.addEventListener('DOMContentLoaded', () => {
   createParticles();
   initWords();
   setupEventListeners();
-  initDatasetToggle();
 });
 
 // ---- PARTICLES ----
@@ -194,50 +180,8 @@ function initWords() {
   const dot = totalWordsEl.querySelector('.stat-dot');
   if (dot) dot.classList.remove('loading');
 
-  // Update dataset label di header
-  const activeDs = getActiveDataset();
-  if (datasetLabelEl) datasetLabelEl.textContent = DATASETS[activeDs]?.label || 'Sumber';
-
   loadStats();
   loadHistory();
-}
-// ---- DATASET TOGGLE ----
-function initDatasetToggle() {
-  if (!datasetToggleBtn) return;
-
-  // Buat dropdown panel
-  const panel = document.createElement('div');
-  panel.id = 'datasetPanel';
-  panel.className = 'dataset-panel hidden';
-
-  const activeDs = getActiveDataset();
-  Object.entries(DATASETS).forEach(([id, info]) => {
-    const item = document.createElement('button');
-    item.className = 'dataset-option' + (id === activeDs ? ' active' : '');
-    item.innerHTML = `
-      <span class="dataset-option-check">${id === activeDs ? '✅' : '○'}</span>
-      <span class="dataset-option-info">
-        <strong>${info.label}</strong>
-        <small>${info.desc}</small>
-      </span>`;
-    item.addEventListener('click', () => {
-      if (id !== getActiveDataset()) switchDataset(id);
-      else panel.classList.add('hidden');
-    });
-    panel.appendChild(item);
-  });
-
-  datasetToggleBtn.parentElement.style.position = 'relative';
-  datasetToggleBtn.insertAdjacentElement('afterend', panel);
-
-  // Toggle dropdown
-  datasetToggleBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    panel.classList.toggle('hidden');
-  });
-
-  // Tutup jika klik di luar
-  document.addEventListener('click', () => panel.classList.add('hidden'));
 }
 
 // ---- EVENT LISTENERS ----

@@ -41,8 +41,6 @@
           <span id="usedCount">0</span>
         </div>
         <button class="stat-chip stats-btn" id="statsToggleBtn" title="Statistik Sesi">📊 Statistik</button>
-        <button class="stat-chip dataset-btn" id="datasetToggleBtn" title="Ganti Sumber Dataset">📚 <span
-            id="datasetLabel">Sumber</span></button>
       </div>
     </div>
   </header>
@@ -164,13 +162,8 @@
     <p>🎮 Dibuat untuk pemain Roblox <strong>Sambung Kata</strong> · Data kata dari dataset Bahasa Indonesia</p>
   </footer>
 
-  <script>
-    // Blocking dataset loader — MUST run before app.js
-    // document.write ensures synchronous/blocking load
-    var _ds = (localStorage.getItem('kbbi_dataset') || 'kbbi1');
-    document.write('<script src="words-' + _ds + '.js?v=2"><\/script>');
-  </script>
-  <script src="app.js?v=12" defer></script>
+  <script src="words.js?v=3" defer></script>
+  <script src="app.js?v=13" defer></script>
 </body>
 
 </html>
