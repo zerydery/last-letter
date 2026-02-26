@@ -1,4 +1,4 @@
-# Netlify configuration for Sambung Kata Helper
+# Netlify configuration for nexkata
 [build]
   publish = "."
 
@@ -11,11 +11,21 @@
     Cache-Control = "public, max-age=3600"
 
 [[headers]]
-  for = "/app.js"
+  for = "/assets/js/app.js"
   [headers.values]
     Cache-Control = "public, max-age=86400"
 
 [[headers]]
-  for = "/style.css"
+  for = "/assets/css/style.css"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/data/words.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"

@@ -73,16 +73,23 @@ Zero dependencies. No build step. Pure browser.
 
 ```
 nexkata/
-├── index.html          # App shell
-├── style.css           # Dark glassmorphism UI
-├── app.js              # Game logic, search, statistics
-├── words.js            # Combined KBBI dataset — 71k+ words
-├── build-words.js      # CLI: rebuild words.js from words.txt
-├── build-kbbi2.js      # CLI: rebuild from kbbi_kata.txt source
-├── build-combined.js   # CLI: merge kbbi1 + kbbi2 into words.js
-├── nexkata-logo.png    # App logo (favicon + header)
-├── netlify.toml        # Deploy config with security headers
-└── LICENSE             # MIT
+├── assets/
+│   ├── css/
+│   │   └── style.css       # Dark glassmorphism UI
+│   ├── js/
+│   │   └── app.js          # Game logic, search, statistics
+│   └── img/
+│       └── nexkata-logo.png  # App logo (favicon + header)
+├── data/
+│   └── words.js            # Combined KBBI dataset — 71k+ words
+├── scripts/
+│   ├── build-words.js      # CLI: rebuild words.js from words.txt
+│   ├── build-kbbi2.js      # CLI: rebuild from kbbi_kata.txt source
+│   └── build-combined.js   # CLI: merge kbbi1 + kbbi2 into words.js
+├── index.html              # App shell
+├── netlify.toml            # Deploy config with security headers
+├── README.md
+└── LICENSE
 ```
 
 ---
@@ -102,7 +109,7 @@ To rebuild the word dataset:
 
 ```bash
 # Requires source files: words.txt + kbbi_kata.txt (not in repo — download separately)
-node build-combined.js  # merge both sources into words.js
+node scripts/build-combined.js  # merge both sources into data/words.js
 ```
 
 ---
