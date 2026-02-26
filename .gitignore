@@ -1,4 +1,4 @@
-# Dependencies (tidak ada untuk project ini)
+# Dependencies
 node_modules/
 
 # OS files
@@ -15,7 +15,17 @@ desktop.ini
 # Logs
 *.log
 
-# Build source files (tidak perlu di-repo, hanya untuk generate ulang)
+# Build source files (raw data — regenerate via build scripts)
 words.txt
 kbbi_kata.txt
+
+# Old/stale dataset files (replaced by words.js)
+words-kbbi1.js
+words-kbbi2.js
+
+# SVG logo (replaced by nexkata-logo.png)
+nexkata-logo.svg
+
+# Chat/conversation log files
+Integrate Nexkata Logo.md
 

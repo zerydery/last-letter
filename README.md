@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/words-71k%20KBBI-00FFB3?style=flat-square" />
+  <img src="https://img.shields.io/badge/words-71k%2B%20KBBI-00FFB3?style=flat-square" />
   <img src="https://img.shields.io/badge/offline-ready-4FC3F7?style=flat-square" />
   <img src="https://img.shields.io/badge/stack-HTML%20·%20CSS%20·%20JS-B39DDB?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-FFD54F?style=flat-square" />
@@ -31,7 +31,7 @@ Type 1–4 letters and instantly get a filtered, sorted list of valid KBBI words
 | | Feature | Description |
 |---|---|---|
 | 🔍 | **Instant Search** | Real-time results as you type — no button needed |
-| 📚 | **Dual KBBI Dataset** | Switch between 71k (broad) and 30k (strict) word lists |
+| 📚 | **KBBI + Proper Nouns** | Combined dataset: 71k+ words including country names (italia, belanda, jepang, etc.) |
 | 🔥 | **Difficulty Ratings** | Words rated by how hard the ending letter is for your opponent |
 | ❌ | **Invalid Word Blacklist** | Mark rejected words — they'll never appear again |
 | 💾 | **Persistent Session** | Used words saved in localStorage across refreshes |
@@ -39,17 +39,6 @@ Type 1–4 letters and instantly get a filtered, sorted list of valid KBBI words
 | 📋 | **One-click Copy** | Click any word to instantly copy it to clipboard |
 | 📊 | **Session Statistics** | Track words used, hard picks, and your longest word |
 | 📱 | **Mobile-first** | Fully responsive — designed for phone use mid-game |
-
----
-
-## Dataset Switch
-
-Click the **📚 dataset button** in the header to switch between two KBBI sources at any time. Your preference is saved locally.
-
-| Dataset | Words | Source |
-|---|---|---|
-| **Damzaky** *(default)* | 71,278 | [damzaky/kumpulan-kata-bahasa-indonesia-KBBI](https://github.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI) |
-| **KBBI Resmi** | 30,452 | [nandalogina/kbbi-database](https://github.com/nandalogina/kbbi-database) |
 
 ---
 
@@ -84,15 +73,16 @@ Zero dependencies. No build step. Pure browser.
 
 ```
 nexkata/
-├── index.html          # App shell & dynamic script loader
+├── index.html          # App shell
 ├── style.css           # Dark glassmorphism UI
-├── app.js              # Game logic, dataset switch, statistics
-├── words-kbbi1.js      # Damzaky dataset — 71,278 words
-├── words-kbbi2.js      # KBBI Resmi dataset — 30,452 words
-├── build-words.js      # CLI: regenerate words-kbbi1.js
-├── build-kbbi2.js      # CLI: regenerate words-kbbi2.js
+├── app.js              # Game logic, search, statistics
+├── words.js            # Combined KBBI dataset — 71k+ words
+├── build-words.js      # CLI: rebuild words.js from words.txt
+├── build-kbbi2.js      # CLI: rebuild from kbbi_kata.txt source
+├── build-combined.js   # CLI: merge kbbi1 + kbbi2 into words.js
 ├── nexkata-logo.png    # App logo (favicon + header)
-└── netlify.toml        # Deployment config
+├── netlify.toml        # Deploy config with security headers
+└── LICENSE             # MIT
 ```
 
 ---
@@ -108,11 +98,11 @@ start index.html        # Windows
 open index.html         # macOS / Linux
 ```
 
-To rebuild a word dataset:
+To rebuild the word dataset:
 
 ```bash
-node build-words.js     # rebuild words-kbbi1.js from words.txt
-node build-kbbi2.js     # rebuild words-kbbi2.js from kbbi_kata.txt
+# Requires source files: words.txt + kbbi_kata.txt (not in repo — download separately)
+node build-combined.js  # merge both sources into words.js
 ```
 
 ---
@@ -124,6 +114,19 @@ Static site — works anywhere:
 - **Netlify** (recommended): Connect GitHub → branch `main` → publish dir `/`
 - **GitHub Pages**: Enable Pages on `main` branch
 - **Netlify Drop**: Drag the project folder to [app.netlify.com/drop](https://app.netlify.com/drop)
+
+---
+
+## Dataset
+
+The word database (`words.js`) is a combined dataset from two KBBI sources:
+
+| Source | Words | Notes |
+|---|---|---|
+| [damzaky/kumpulan-kata-bahasa-indonesia-KBBI](https://github.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI) | ~71k | Broad KBBI wordlist |
+| [nandalogina/kbbi-database](https://github.com/nandalogina/kbbi-database) | ~30k | Official KBBI dump (includes proper nouns) |
+
+Both are merged and deduplicated into a single `words.js` file (~78k unique words).
 
 ---
 
