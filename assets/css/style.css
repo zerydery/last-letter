@@ -1464,6 +1464,53 @@ main.main {
 }
 
 @keyframes wakeLockPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 213, 79, 0); }
-  50%       { box-shadow: 0 0 8px 3px rgba(255, 213, 79, 0.25); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 213, 79, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 3px rgba(255, 213, 79, 0.25);
+  }
+}
+
+/* ===========================
+   TWO-LETTER MODE BUTTON
+   =========================== */
+.two-letter-btn {
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 10px;
+  min-width: 36px;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border);
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.two-letter-btn:hover {
+  background: rgba(179, 157, 219, 0.12);
+  border-color: rgba(179, 157, 219, 0.45);
+  color: var(--neon-purple, #B39DDB);
+}
+
+.two-letter-btn.active {
+  background: rgba(179, 157, 219, 0.18);
+  border-color: rgba(179, 157, 219, 0.55);
+  color: #d1c4e9;
+  animation: twoLetterPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes twoLetterPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(179, 157, 219, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 8px 3px rgba(179, 157, 219, 0.3);
+  }
 }
