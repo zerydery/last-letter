@@ -800,6 +800,41 @@ main.main {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 18px rgba(180, 0, 255, 0.2);
 }
 
+/* Level 4 💀 Mustahil */
+.last-letter-badge.badge-hard-4 {
+  background: rgba(200, 0, 0, 0.25);
+  color: #ff5252;
+  border-color: rgba(200, 0, 0, 0.5);
+  animation: impossiblePulse 1s ease-in-out infinite;
+  font-size: 9px;
+  letter-spacing: 0;
+}
+
+.word-card.card-hard-4 {
+  border-color: rgba(200, 0, 0, 0.2);
+  background: linear-gradient(135deg, var(--bg-card), rgba(200, 0, 0, 0.04));
+}
+
+.word-card.card-hard-4:hover {
+  border-color: rgba(200, 0, 0, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 24px rgba(200, 0, 0, 0.25);
+}
+
+@keyframes impossiblePulse {
+
+  0%,
+  100% {
+    box-shadow: none;
+    opacity: 1;
+  }
+
+  50% {
+    box-shadow: 0 0 10px 3px rgba(200, 0, 0, 0.5);
+    opacity: 0.85;
+  }
+}
+
+
 @keyframes hardPulse {
 
   0%,
@@ -841,6 +876,12 @@ main.main {
   background: rgba(180, 0, 255, 0.2);
   border-color: rgba(180, 0, 255, 0.5);
   color: #d481ff;
+}
+
+.filter-chip.diff-4.active {
+  background: rgba(200, 0, 0, 0.2);
+  border-color: rgba(200, 0, 0, 0.55);
+  color: #ff5252;
 }
 
 .copy-hint {

@@ -96,38 +96,44 @@ let usedWords = new Set();
 let invalidWords = new Set();
 let currentFilter = 'all';
 let currentSort = 'length-asc';
-let currentDifficulty = 0; // 0=semua, 1=sulit, 2=sangat sulit, 3=ekstrem
+let currentDifficulty = 0; // 0=semua, 1=sulit, 2=sangat sulit, 3=ekstrem, 4=mustahil
 let currentLetter = '';
 let displayLimit = 60;
 let isShuffled = false;
-let twoLetterMode = false; // Mode 2 huruf terakhir (ronde khusus)
 
+// Lookup table: jumlah kata berawalan 2 huruf tertentu (pre-computed)
+const twoLetterCounts = {};
+function buildTwoLetterCounts() {
+  for (const word of allWords) {
+    if (word.length >= 2) {
+      const key = word.slice(0, 2);
+      twoLetterCounts[key] = (twoLetterCounts[key] || 0) + 1;
+    }
+  }
+}
 
-// Tingkat kesulitan huruf akhir (seberapa susah lawan cari kata berawalan huruf tsb)
-// 1 = Sulit 🔥  |  2 = Sangat Sulit 🔥🔥  |  3 = Ekstrem 🔥🔥🔥
+// Tingkat kesulitan huruf akhir — otomatis gabungkan 1-huruf & 2-huruf, ambil max
+// 1 = Sulit 🔥  |  2 = Sangat Sulit 🔥🔥  |  3 = Ekstrem 🔥🔥🔥  |  4 = 💀 Mustahil
 const DIFFICULTY_MAP = {
   c: 1, e: 1, f: 1, g: 1, h: 1, o: 1, w: 1, y: 1,  // Level 1 — sulit
   v: 2, x: 2,                                         // Level 2 — sangat sulit
   q: 3, z: 3,                                         // Level 3 — ekstrem
 };
 
-// Thresholds jumlah kata database untuk mode 2-huruf
-const TWO_LETTER_THRESHOLDS = [
-  { max: 5, level: 3 },  // < 5 kata  → Ekstrem
-  { max: 30, level: 2 },  // < 30 kata → Sangat Sulit
-  { max: 120, level: 1 },  // < 120 kata → Sulit
-];
-
 function getDifficulty(word) {
-  if (twoLetterMode && word.length >= 2) {
-    const last2 = word.slice(-2);
-    const count = allWords.filter(w => w.startsWith(last2)).length;
-    for (const t of TWO_LETTER_THRESHOLDS) {
-      if (count < t.max) return t.level;
-    }
-    return 0; // >= 120 kata → Normal
-  }
-  return DIFFICULTY_MAP[word.slice(-1)] || 0;
+  const letterDiff = DIFFICULTY_MAP[word.slice(-1)] || 0;
+  if (word.length < 2) return letterDiff;
+
+  // Hitung kesulitan 2-huruf terakhir dari lookup table
+  const last2 = word.slice(-2);
+  const count = twoLetterCounts[last2] || 0;
+  let twoDiff = 0;
+  if (count < 5) twoDiff = 4; // Mustahil
+  else if (count < 20) twoDiff = 3; // Ekstrem
+  else if (count < 80) twoDiff = 2; // Sangat Sulit
+  else if (count < 250) twoDiff = 1; // Sulit
+
+  return Math.max(letterDiff, twoDiff);
 }
 
 
@@ -197,6 +203,7 @@ function initWords() {
   const dot = totalWordsEl.querySelector('.stat-dot');
   if (dot) dot.classList.remove('loading');
 
+  buildTwoLetterCounts(); // pre-compute lookup 2-huruf
   loadStats();
   loadHistory();
 }
@@ -273,9 +280,6 @@ function setupEventListeners() {
     });
   });
 
-  const twoLetterBtn = document.getElementById('twoLetterBtn');
-  if (twoLetterBtn) twoLetterBtn.addEventListener('click', toggleTwoLetterMode);
-
   const manageInvalidBtn = document.getElementById('manageInvalidBtn');
   if (manageInvalidBtn) manageInvalidBtn.addEventListener('click', toggleBlacklist);
 
@@ -285,24 +289,6 @@ function setupEventListeners() {
   const resetStatsBtn = document.getElementById('resetStatsBtn');
   if (resetStatsBtn) resetStatsBtn.addEventListener('click', resetStatsConfirm);
 }
-
-// ---- MODE 2 HURUF ----
-function toggleTwoLetterMode() {
-  twoLetterMode = !twoLetterMode;
-  const btn = document.getElementById('twoLetterBtn');
-  if (btn) {
-    btn.classList.toggle('active', twoLetterMode);
-    btn.title = twoLetterMode
-      ? 'Mode 2 huruf aktif — klik untuk nonaktifkan'
-      : 'Mode ronde 2 huruf terakhir';
-  }
-  if (currentLetter) applyFilterSort(); // refresh badge
-  showToast(twoLetterMode
-    ? '🎯 Mode 2 Huruf aktif — badge sesuai ronde 2-huruf'
-    : '🔠 Kembali ke mode 1 huruf'
-  );
-}
-
 
 // ---- SEARCH ----
 function doSearch() {
@@ -411,28 +397,28 @@ function createWordCard(word, index) {
   const rest = word.slice(currentLetter.length);
   const diff = getDifficulty(word);
 
-  // Saat mode 2-huruf: badge tampilkan 2 huruf terakhir + jumlah kata lawan
-  const isTwoMode = twoLetterMode && word.length >= 2;
-  const lastL = isTwoMode
+  // Badge level 4 menampilkan 2 huruf terakhir agar user tahu itu dari combo 2-huruf
+  const showTwoLetters = diff >= 3 && word.length >= 2;
+  const lastL = showTwoLetters
     ? word.slice(-2).toUpperCase()
     : word.slice(-1).toUpperCase();
 
-  // Badge rendering berdasarkan level kesulitan
-  const BADGES = ['', '🔥', '🔥🔥', '🔥🔥🔥'];
-  const BADGE_LABELS = ['', 'badge-hard-1', 'badge-hard-2', 'badge-hard-3'];
-  const badgeClass = diff > 0 ? BADGE_LABELS[diff] : '';
-  const badgeIcon = diff > 0 ? BADGES[diff] : '↓';
+  // Badge rendering: 4 level + normal
+  const BADGES = ['', '\ud83d\udd25', '\ud83d\udd25\ud83d\udd25', '\ud83d\udd25\ud83d\udd25\ud83d\udd25', '\ud83d\udc80'];
+  const BADGE_LABELS = ['', 'badge-hard-1', 'badge-hard-2', 'badge-hard-3', 'badge-hard-4'];
+  const badgeClass = diff > 0 ? (BADGE_LABELS[diff] || 'badge-hard-4') : '';
+  const badgeIcon = diff > 0 ? (BADGES[diff] || '\ud83d\udc80') : '\u2193';
 
-  // Tooltip: tampilkan jumlah kata lawan saat mode 2-huruf
+  // Tooltip untuk level ≥ 3: tunjukkan jumlah kata lawan berawalan 2-huruf
   let badgeTitle = '';
-  if (isTwoMode) {
-    const count = allWords.filter(w => w.startsWith(word.slice(-2))).length;
-    badgeTitle = `title="${count} kata berawalan '${word.slice(-2)}'"`;
+  if (showTwoLetters) {
+    const cnt = twoLetterCounts[word.slice(-2)] || 0;
+    badgeTitle = `title="${cnt} kata berawalan '${word.slice(-2)}'"`;
   }
 
   card.innerHTML = `
-    <span class="copy-hint">📋 salin</span>
-    <button class="invalid-btn" title="Kata ini tidak valid di game">❌</button>
+    <span class="copy-hint">\ud83d\udccb salin</span>
+    <button class="invalid-btn" title="Kata ini tidak valid di game">\u274c</button>
     <div class="word-text">
       <span class="highlight">${escHtml(prefix)}</span>${escHtml(rest)}
     </div>
@@ -441,11 +427,11 @@ function createWordCard(word, index) {
       <span class="last-letter-badge ${badgeClass}" ${badgeTitle}>${badgeIcon}${lastL}</span>
     </div>`;
 
-  if (diff > 0) card.classList.add(`card-hard-${diff}`);
+  if (diff > 0) card.classList.add(`card-hard-${Math.min(diff, 4)}`);
 
   // Klik kartu utama = salin & tandai terpakai
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.invalid-btn')) return; // jangan trigger jika klik tombol ❌
+    if (e.target.closest('.invalid-btn')) return;
     handleWordClick(word, card);
   });
 
@@ -457,6 +443,7 @@ function createWordCard(word, index) {
 
   return card;
 }
+
 
 
 // ---- WORD CLICK ----
