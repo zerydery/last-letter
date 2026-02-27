@@ -193,6 +193,15 @@ function setupEventListeners() {
     else resetResults();
   });
 
+  // Click/tap input: jika ada nilai, clear dulu supaya siap ketik huruf baru
+  letterInput.addEventListener('click', () => {
+    if (letterInput.value.length > 0) {
+      letterInput.value = '';
+      clearBtn.classList.remove('visible');
+      resetResults();
+    }
+  });
+
   letterInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') doSearch();
   });
@@ -415,13 +424,8 @@ function handleWordClick(word, card) {
     resultsInfo.innerHTML = `Ditemukan <strong>${total.toLocaleString('id-ID')}</strong> kata berawalan <strong>"${currentLetter.toUpperCase()}"</strong>`;
   }
 
-  // Auto-reset: clear input + fokus setelah animasi card selesai
-  // Results grid sengaja dibiarkan — akan auto-clear saat user ketik huruf baru
-  setTimeout(() => {
-    letterInput.value = '';
-    clearBtn.classList.remove('visible');
-    letterInput.focus();
-  }, 350);
+  // Auto-fokus ke input — user tinggal klik/tap input untuk clear & ketik huruf baru
+  setTimeout(() => letterInput.focus(), 350);
 }
 
 
@@ -786,3 +790,58 @@ function renderStatsPanel() {
       </div>
     </div>`).join('');
 }
+
+// ============================================================
+// SCREEN WAKE LOCK — cegah layar mobile mati/redup
+// ============================================================
+let wakeLock = null;
+const wakeLockBtn = document.getElementById('wakeLockBtn');
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) {
+    showToast('⚠️ Browser tidak mendukung Wake Lock');
+    return;
+  }
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    if (wakeLockBtn) {
+      wakeLockBtn.classList.add('active');
+      wakeLockBtn.title = 'Layar terkunci — klik untuk nonaktifkan';
+    }
+    showToast('☀️ Layar tidak akan redup');
+    wakeLock.addEventListener('release', () => {
+      if (wakeLockBtn) wakeLockBtn.classList.remove('active');
+    });
+  } catch (err) {
+    showToast('⚠️ Gagal mengunci layar');
+  }
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) {
+    await wakeLock.release();
+    wakeLock = null;
+  }
+  if (wakeLockBtn) {
+    wakeLockBtn.classList.remove('active');
+    wakeLockBtn.title = 'Cegah layar redup';
+  }
+  showToast('😴 Layar kembali normal');
+}
+
+function toggleWakeLock() {
+  if (wakeLock) releaseWakeLock();
+  else requestWakeLock();
+}
+
+if (wakeLockBtn) {
+  wakeLockBtn.addEventListener('click', toggleWakeLock);
+}
+
+// Re-acquire wake lock saat tab kembali aktif (mis. alt+tab dari Roblox)
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    await requestWakeLock();
+  }
+});
+
