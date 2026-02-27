@@ -414,7 +414,16 @@ function handleWordClick(word, card) {
   if (total > 0) {
     resultsInfo.innerHTML = `Ditemukan <strong>${total.toLocaleString('id-ID')}</strong> kata berawalan <strong>"${currentLetter.toUpperCase()}"</strong>`;
   }
+
+  // Auto-reset: clear input + fokus setelah animasi card selesai
+  // Results grid sengaja dibiarkan — akan auto-clear saat user ketik huruf baru
+  setTimeout(() => {
+    letterInput.value = '';
+    clearBtn.classList.remove('visible');
+    letterInput.focus();
+  }, 350);
 }
+
 
 // ---- HISTORY ----
 const LS_KEY = 'sambungkata_history';
