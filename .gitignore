@@ -17,8 +17,14 @@ desktop.ini
 
 # Build source files (raw data — regenerate via build scripts)
 words.txt
+words_v051.txt
 kbbi_kata.txt
 kbbi_v.csv
+kbbi_hidayat.csv
+kbbi_v_part1.json
+kbbi_v_part2.json
+kbbi_v_part3.json
+kbbi_v_part4.json
 
 # Old/stale dataset files (replaced by words.js)
 words-kbbi1.js
