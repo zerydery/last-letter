@@ -1,118 +1,82 @@
-// scripts/build-verified.js  (v3 — UNION all KBBI sources, no strict intersection)
-// Sources (semua dari KBBI):
-//   A: kbbi_v.csv        (aryakdaniswara KBBI V, Nov 2024) 
-//   B: kbbi_v_part*.json (same repo, full JSON — streaming extract)
-//   C: words.txt         (damzaky list_1.0.0 — from KBBI APK)
-//   D: words_v051.txt    (damzaky list_0.5.1)
-//   E: kbbi_hidayat.csv  (Hidayathamir — KBBI compilation)
-//
-// Strategy: UNION semua sumber KBBI, semua sudah dari KBBI jadi tidak perlu filter ketat
-// Filter minimal: hanya a-z lowercase, min 2 karakter
+// scripts/build-verified.js  (v4 — strict KBBI V intersection filter)
+// Solusi untuk masalah kata palsu (aa, ab, ao dll):
+// → Gunakan kbbi_v.csv sebagai SATU-SATUNYA ground truth
+// → Semua sumber lain hanya menjadi kandidat yang harus lolos filter KBBI
+// → Kata yang tidak ada di kbbi_v.csv DIBUANG (tidak peduli dari mana sumbernya)
 
 const fs = require('fs');
 const path = require('path');
-const rl = require('readline');
 const ROOT = path.join(__dirname, '..');
 
-function clean(word) {
-    return (word || '').trim().toLowerCase().replace(/\s*\(\d+\)\s*$/, '').trim();
+function clean(w) {
+    return (w || '').toString().trim().toLowerCase().replace(/\s*\(\d+\)\s*$/, '').trim();
 }
 function isValid(w) { return /^[a-z]{2,}$/.test(w); }
 
-const allWords = new Set();
-let srcStats = {};
+// ── 1. Build truth_set dari kbbi_v.csv (WAJIB ada di sini untuk lolos) ────────
+console.log('\n🔑 Building truth_set from kbbi_v.csv (KBBI V ground truth)...');
+const csvPath = path.join(ROOT, 'kbbi_v.csv');
+if (!fs.existsSync(csvPath)) { console.error('ERROR: kbbi_v.csv not found! Run download first.'); process.exit(1); }
 
-function addWords(src, count) {
-    srcStats[src] = count;
-    console.log(`  ✅ ${src}: +${count.toLocaleString('id-ID')} (total: ${allWords.size.toLocaleString('id-ID')})`);
+const truthSet = new Set();
+fs.readFileSync(csvPath, 'utf8').split('\n').slice(1).forEach(line => {
+    const w = clean(line.split(',')[0].replace(/^"|"$/g, ''));
+    if (isValid(w)) truthSet.add(w);
+});
+console.log(`  ✅ Ground truth: ${truthSet.size.toLocaleString('id-ID')} verified KBBI words\n`);
+
+// ── 2. Kumpulkan kandidat dari semua sumber ────────────────────────────────────
+const candidates = new Set([...truthSet]); // mulai dari ground truth sendiri
+
+// Damzaky v1
+const wPath = path.join(ROOT, 'words.txt');
+if (fs.existsSync(wPath)) {
+    let added = 0;
+    fs.readFileSync(wPath, 'utf8').split('\n').forEach(l => { const w = clean(l); if (isValid(w)) { candidates.add(w); added++; } });
+    console.log(`  + words.txt (damzaky v1):     ${added.toLocaleString('id-ID')} kata masuk kandidat`);
 }
 
-// ── A: kbbi_v.csv ─────────────────────────────────────────────────────────────
-console.log('\n📖 A: kbbi_v.csv...');
-const csvBefore = allWords.size;
-if (fs.existsSync(path.join(ROOT, 'kbbi_v.csv'))) {
-    fs.readFileSync(path.join(ROOT, 'kbbi_v.csv'), 'utf8').split('\n').slice(1).forEach(line => {
+// Damzaky v0.5.1
+const w051 = path.join(ROOT, 'words_v051.txt');
+if (fs.existsSync(w051)) {
+    let added = 0;
+    fs.readFileSync(w051, 'utf8').split('\n').forEach(l => { const w = clean(l); if (isValid(w)) { candidates.add(w); added++; } });
+    console.log(`  + words_v051.txt (damzaky v2): ${added.toLocaleString('id-ID')} kata masuk kandidat`);
+}
+
+// Hidayathamir
+const hPath = path.join(ROOT, 'kbbi_hidayat.csv');
+if (fs.existsSync(hPath)) {
+    let added = 0;
+    fs.readFileSync(hPath, 'utf8').split('\n').slice(1).forEach(line => {
         const w = clean(line.split(',')[0].replace(/^"|"$/g, ''));
-        if (isValid(w)) allWords.add(w);
+        if (isValid(w)) { candidates.add(w); added++; }
     });
-    addWords('kbbi_v.csv', allWords.size - csvBefore);
+    console.log(`  + kbbi_hidayat.csv:             ${added.toLocaleString('id-ID')} kata masuk kandidat`);
 }
 
-// ── B: kbbi_v_part*.json — streaming line-by-line keyword extract ─────────────
-console.log('\n📖 B: KBBI V JSON parts (streaming)...');
-const jsonBefore = allWords.size;
-for (let i = 1; i <= 4; i++) {
-    const fp = path.join(ROOT, `kbbi_v_part${i}.json`);
-    if (!fs.existsSync(fp)) { console.log(`  ⚠️  Part ${i} not found`); continue; }
-    process.stdout.write(`  Part ${i}... `);
-    // Line-by-line: look for "nama": "word" patterns
-    const content = fs.readFileSync(fp, 'utf8');
-    // Extract with simpler string search (no regex on whole file)
-    let pos = 0;
-    const key = '"nama":"';
-    const key2 = '"nama": "';
-    while (pos < content.length) {
-        let idx = content.indexOf('"nama"', pos);
-        if (idx === -1) break;
-        idx = content.indexOf('"', idx + 6);
-        if (idx === -1) break;
-        idx++;
-        const end = content.indexOf('"', idx);
-        if (end === -1 || end - idx > 60) { pos = idx; continue; }
-        const w = clean(content.slice(idx, end));
-        if (isValid(w)) allWords.add(w);
-        pos = end + 1;
-    }
-    console.log(`done (total: ${allWords.size.toLocaleString('id-ID')})`);
-}
-console.log(`  JSON parts added: +${(allWords.size - jsonBefore).toLocaleString('id-ID')}`);
+console.log(`\n  Total kandidat: ${candidates.size.toLocaleString('id-ID')} kata`);
 
-// ── C: words.txt (damzaky v1.0.0) ─────────────────────────────────────────────
-console.log('\n📖 C: words.txt (damzaky v1)...');
-const cBefore = allWords.size;
-if (fs.existsSync(path.join(ROOT, 'words.txt'))) {
-    fs.readFileSync(path.join(ROOT, 'words.txt'), 'utf8').split('\n').forEach(l => {
-        const w = clean(l); if (isValid(w)) allWords.add(w);
-    });
-    addWords('words.txt', allWords.size - cBefore);
-}
+// ── 3. FILTER KETAT: hanya simpan yang ada di truth_set ───────────────────────
+console.log('\n🔍 Filtering — hanya simpan yang ada di KBBI V ground truth...');
+const verified = [...candidates].filter(w => truthSet.has(w)).sort();
 
-// ── D: words_v051.txt (damzaky v0.5.1) ────────────────────────────────────────
-console.log('\n📖 D: words_v051.txt (damzaky v0.5.1)...');
-const dBefore = allWords.size;
-if (fs.existsSync(path.join(ROOT, 'words_v051.txt'))) {
-    fs.readFileSync(path.join(ROOT, 'words_v051.txt'), 'utf8').split('\n').forEach(l => {
-        const w = clean(l); if (isValid(w)) allWords.add(w);
-    });
-    addWords('words_v051.txt', allWords.size - dBefore);
-}
+const rejected = candidates.size - verified.length;
+console.log(`  ✅ Lolos filter KBBI: ${verified.length.toLocaleString('id-ID')} kata`);
+console.log(`  ❌ Dibuang (tidak ada di KBBI): ${rejected.toLocaleString('id-ID')} kata`);
+console.log(`  (termasuk: aa, ab, ac, ao, drakor, jomblo, dll)`);
 
-// ── E: kbbi_hidayat.csv ────────────────────────────────────────────────────────
-console.log('\n📖 E: kbbi_hidayat.csv (Hidayathamir)...');
-const eBefore = allWords.size;
-if (fs.existsSync(path.join(ROOT, 'kbbi_hidayat.csv'))) {
-    fs.readFileSync(path.join(ROOT, 'kbbi_hidayat.csv'), 'utf8').split('\n').slice(1).forEach(line => {
-        const w = clean(line.split(',')[0].replace(/^"|"$/g, ''));
-        if (isValid(w)) allWords.add(w);
-    });
-    addWords('kbbi_hidayat.csv', allWords.size - eBefore);
-}
-
-// ── Output ─────────────────────────────────────────────────────────────────────
-const verified = [...allWords].sort();
-console.log(`\n📊 TOTAL: ${verified.length.toLocaleString('id-ID')} kata dari semua sumber KBBI`);
-console.log(`   (dari 71.198 sebelumnya: +${(verified.length - 71198).toLocaleString('id-ID')} kata baru)`);
-
+// ── 4. Output ────────────────────────────────────────────────────────────────────
 const output = `window.KBBI_WORDS=${JSON.stringify(verified)};`;
 fs.writeFileSync(path.join(ROOT, 'data', 'words.js'), output, 'utf8');
-console.log(`\n✅ Written data/words.js — ${(output.length / 1024 / 1024).toFixed(2)} MB`);
+console.log(`\n✅ data/words.js: ${verified.length.toLocaleString('id-ID')} kata — ${(output.length / 1024 / 1024).toFixed(2)} MB`);
 
-// ── Spot check ─────────────────────────────────────────────────────────────────
-console.log('\n🧪 Spot checks:');
+// ── 5. Spot-check ───────────────────────────────────────────────────────────────
+console.log('\n🧪 Spot check — kata palsu HARUS absent:');
 const vSet = new Set(verified);
-['italia', 'adaptasi', 'mobilisasi', 'koordinasi', 'sosialisasi', 'implementasi', 'zonasi'].forEach(w =>
-    console.log(`  ${vSet.has(w) ? '✅' : '❌'} ${w}`)
-);
-['drakor', 'jomblo', 'ngebut', 'ngobrol', 'bucin'].forEach(w =>
-    console.log(`  ${!vSet.has(w) ? '✅ absent' : '⚠️  present'} ${w}`)
-);
+const palsu = ['aa', 'ab', 'ac', 'ao', 'aal', 'aan', 'drakor', 'jomblo', 'ngebut', 'ngobrol', 'bucin'];
+palsu.forEach(w => console.log(`  ${!vSet.has(w) ? '✅ absent' : '❌ MASIH ADA (bug!)'} "${w}"`));
+
+console.log('\n🧪 Spot check — kata valid HARUS ada:');
+const valid = ['abadi', 'zakat', 'adaptasi', 'inovasi', 'zonasi', 'italia', 'koordinasi', 'mobilisasi'];
+valid.forEach(w => console.log(`  ${vSet.has(w) ? '✅ ada' : '❌ HILANG!'} "${w}"`));
