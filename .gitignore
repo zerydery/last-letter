@@ -36,3 +36,6 @@ nexkata-logo.svg
 # Chat/conversation log files
 Integrate Nexkata Logo.md
 
+# Generated word list exports (large files, regenerate via build-verified.js)
+KBBI_Words.md
+

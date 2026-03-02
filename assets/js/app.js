@@ -94,46 +94,77 @@ let allWords = [];
 let filteredWords = [];
 let usedWords = new Set();
 let invalidWords = new Set();
-let currentFilter = 'all';
 let currentSort = 'length-asc';
-let currentDifficulty = 0; // 0=semua, 1=sulit, 2=sangat sulit, 3=ekstrem, 4=mustahil
 let currentLetter = '';
 let displayLimit = 60;
 let isShuffled = false;
 
-// Lookup table: jumlah kata berawalan 2 huruf tertentu (pre-computed)
-const twoLetterCounts = {};
-function buildTwoLetterCounts() {
+// ---- Letter Score — berapa banyak kata lawan bisa dibuat dari huruf terakhir ----
+// Pre-computed saat allWords selesai dimuat
+const letterCountMap = {}; // { 'a': 4029, 'b': 6992, ... }
+
+function buildLetterCountMap() {
+  for (const word of allWords) {
+    const first = word[0];
+    letterCountMap[first] = (letterCountMap[first] || 0) + 1;
+  }
+}
+
+// Skor 1–5 ⭐ — makin tinggi = makin sedikit kata lawan = makin bagus dimainkan
+// Threshold berbasis distribusi dataset 68k kata KBBI
+function getLetterScore(word) {
+  const last = word.slice(-1);
+  const count = letterCountMap[last] || 0;
+  if (count === 0) return 5; // tidak ada kata → jebakan sempurna
+  if (count < 50) return 5;
+  if (count < 300) return 4;
+  if (count < 1000) return 3;
+  if (count < 3000) return 2;
+  return 1;
+}
+
+// ---- 2-Letter Score — untuk mode game yang pakai 2 huruf terakhir ----
+const twoLetterCountMap = {}; // { 'ax': 12, 'ex': 87, ... }
+
+function buildTwoLetterCountMap() {
   for (const word of allWords) {
     if (word.length >= 2) {
       const key = word.slice(0, 2);
-      twoLetterCounts[key] = (twoLetterCounts[key] || 0) + 1;
+      twoLetterCountMap[key] = (twoLetterCountMap[key] || 0) + 1;
     }
   }
 }
 
-// Tingkat kesulitan huruf akhir — otomatis gabungkan 1-huruf & 2-huruf, ambil max
-// 1 = Sulit 🔥  |  2 = Sangat Sulit 🔥🔥  |  3 = Ekstrem 🔥🔥🔥  |  4 = 💀 Mustahil
-const DIFFICULTY_MAP = {
-  c: 1, e: 1, f: 1, g: 1, h: 1, o: 1, w: 1, y: 1,  // Level 1 — sulit
-  v: 2, x: 2,                                         // Level 2 — sangat sulit
-  q: 3, z: 3,                                         // Level 3 — ekstrem
-};
-
-function getDifficulty(word) {
-  const letterDiff = DIFFICULTY_MAP[word.slice(-1)] || 0;
-  if (word.length < 2) return letterDiff;
-
-  // Hitung kesulitan 2-huruf terakhir dari lookup table
+// Skor 2-huruf terakhir — rata-rata per 2-huruf combo ~100 kata
+function get2LetterScore(word) {
+  if (word.length < 2) return getLetterScore(word);
   const last2 = word.slice(-2);
-  const count = twoLetterCounts[last2] || 0;
-  let twoDiff = 0;
-  if (count < 5) twoDiff = 4; // Mustahil
-  else if (count < 20) twoDiff = 3; // Ekstrem
-  else if (count < 80) twoDiff = 2; // Sangat Sulit
-  else if (count < 250) twoDiff = 1; // Sulit
+  const count = twoLetterCountMap[last2] || 0;
+  if (count === 0) return 5;
+  if (count < 5) return 5;
+  if (count < 20) return 4;
+  if (count < 60) return 3;
+  if (count < 150) return 2;
+  return 1;
+}
 
-  return Math.max(letterDiff, twoDiff);
+// Skor gabungan — untuk sort ⭐ Terbaik
+function getCombinedScore(word) {
+  return getLetterScore(word) + get2LetterScore(word); // max 10
+}
+
+// Label & warna per skor
+const SCORE_META = [
+  null,
+  { label: 'Normal', cls: 'score-1' },
+  { label: 'Lumayan', cls: 'score-2' },
+  { label: 'Sulit', cls: 'score-3' },
+  { label: 'Sangat Sulit', cls: 'score-4' },
+  { label: 'Jebakan!', cls: 'score-5' },
+];
+
+function renderStars(score) {
+  return '⭐'.repeat(score);
 }
 
 
@@ -203,7 +234,8 @@ function initWords() {
   const dot = totalWordsEl.querySelector('.stat-dot');
   if (dot) dot.classList.remove('loading');
 
-  buildTwoLetterCounts(); // pre-compute lookup 2-huruf
+  buildLetterCountMap();    // pre-compute skor 1-huruf
+  buildTwoLetterCountMap(); // pre-compute skor 2-huruf
   loadStats();
   loadHistory();
 }
@@ -247,33 +279,11 @@ function setupEventListeners() {
   resetBtn.addEventListener('click', resetSession);
   shuffleBtn.addEventListener('click', toggleShuffle);
 
-  document.querySelectorAll('.filter-chip[data-filter]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip[data-filter]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter = btn.dataset.filter;
-      displayLimit = 60;
-      isShuffled = false;
-      applyFilterSort();
-    });
-  });
-
   document.querySelectorAll('.filter-chip[data-sort]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-chip[data-sort]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentSort = btn.dataset.sort;
-      displayLimit = 60;
-      isShuffled = false;
-      applyFilterSort();
-    });
-  });
-
-  document.querySelectorAll('.filter-chip[data-diff]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip[data-diff]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentDifficulty = parseInt(btn.dataset.diff, 10);
       displayLimit = 60;
       isShuffled = false;
       applyFilterSort();
@@ -310,23 +320,12 @@ function applyFilterSort() {
     w.startsWith(currentLetter) && !usedWords.has(w) && !invalidWords.has(w)
   );
 
-  switch (currentFilter) {
-    case 'short': base = base.filter(w => w.length <= 5); break;
-    case 'medium': base = base.filter(w => w.length >= 6 && w.length <= 8); break;
-    case 'long': base = base.filter(w => w.length >= 9); break;
-  }
-
-  // Filter by difficulty level (independen dari sort)
-  if (currentDifficulty > 0) {
-    base = base.filter(w => getDifficulty(w) >= currentDifficulty);
-  }
-
   switch (currentSort) {
     case 'length-asc': base.sort((a, b) => a.length - b.length || a.localeCompare(b)); break;
     case 'length-desc': base.sort((a, b) => b.length - a.length || a.localeCompare(b)); break;
     case 'alpha': base.sort((a, b) => a.localeCompare(b)); break;
-    case 'hard-first': base.sort((a, b) => {
-      const diff = getDifficulty(b) - getDifficulty(a); // tertinggi dulu
+    case 'best-first': base.sort((a, b) => {
+      const diff = getCombinedScore(b) - getCombinedScore(a); // skor gabungan tertinggi dulu
       return diff !== 0 ? diff : a.length - b.length;
     }); break;
   }
@@ -395,47 +394,38 @@ function createWordCard(word, index) {
 
   const prefix = word.slice(0, currentLetter.length);
   const rest = word.slice(currentLetter.length);
-  const diff = getDifficulty(word);
+  const score1 = getLetterScore(word);
+  const score2 = get2LetterScore(word);
+  const meta1 = SCORE_META[score1];
+  const meta2 = SCORE_META[score2];
+  const lastL1 = word.slice(-1).toUpperCase();
+  const lastL2 = word.length >= 2 ? word.slice(-2).toUpperCase() : lastL1;
+  const count1 = letterCountMap[word.slice(-1)] || 0;
+  const count2 = twoLetterCountMap[word.slice(-2)] || 0;
+  const topScore = Math.max(score1, score2);
 
-  // Badge level 4 menampilkan 2 huruf terakhir agar user tahu itu dari combo 2-huruf
-  const showTwoLetters = diff >= 3 && word.length >= 2;
-  const lastL = showTwoLetters
-    ? word.slice(-2).toUpperCase()
-    : word.slice(-1).toUpperCase();
-
-  // Badge rendering: 4 level + normal
-  const BADGES = ['', '\ud83d\udd25', '\ud83d\udd25\ud83d\udd25', '\ud83d\udd25\ud83d\udd25\ud83d\udd25', '\ud83d\udc80'];
-  const BADGE_LABELS = ['', 'badge-hard-1', 'badge-hard-2', 'badge-hard-3', 'badge-hard-4'];
-  const badgeClass = diff > 0 ? (BADGE_LABELS[diff] || 'badge-hard-4') : '';
-  const badgeIcon = diff > 0 ? (BADGES[diff] || '\ud83d\udc80') : '\u2193';
-
-  // Tooltip untuk level ≥ 3: tunjukkan jumlah kata lawan berawalan 2-huruf
-  let badgeTitle = '';
-  if (showTwoLetters) {
-    const cnt = twoLetterCounts[word.slice(-2)] || 0;
-    badgeTitle = `title="${cnt} kata berawalan '${word.slice(-2)}'"`;
-  }
+  card.classList.add(SCORE_META[topScore].cls);
 
   card.innerHTML = `
-    <span class="copy-hint">\ud83d\udccb salin</span>
-    <button class="invalid-btn" title="Kata ini tidak valid di game">\u274c</button>
+    <span class="copy-hint">📋 salin</span>
+    <button class="invalid-btn" title="Kata ini tidak valid di game">✕</button>
     <div class="word-text">
       <span class="highlight">${escHtml(prefix)}</span>${escHtml(rest)}
     </div>
     <div class="word-footer">
       <span class="word-length">${word.length} huruf</span>
-      <span class="last-letter-badge ${badgeClass}" ${badgeTitle}>${badgeIcon}${lastL}</span>
+      <div class="badge-group">
+        <span class="last-letter-badge ${meta1.cls}" title="${count1} kata lawan berawalan '${lastL1}'">${renderStars(score1)} ${lastL1}</span>
+        <span class="last-letter-badge badge-2l ${meta2.cls}" title="${count2} kata lawan berawalan '${lastL2}'">${renderStars(score2)} ${lastL2}</span>
+      </div>
     </div>`;
-
-  if (diff > 0) card.classList.add(`card-hard-${Math.min(diff, 4)}`);
-
   // Klik kartu utama = salin & tandai terpakai
   card.addEventListener('click', (e) => {
     if (e.target.closest('.invalid-btn')) return;
     handleWordClick(word, card);
   });
 
-  // Tombol ❌ = tandai tidak valid di game
+  // Tombol ✕ = tandai tidak valid di game
   card.querySelector('.invalid-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     markInvalid(word, card);
@@ -579,8 +569,8 @@ function loadHistory() {
       usedWords.add(word);
       // Sync stats dari riwayat yang dimuat
       stats.totalWordsUsed++;
-      const diff = getDifficulty(word);
-      if (diff > 0) {
+      const score = getLetterScore(word);
+      if (score >= 3) {
         stats.hardWordsUsed++;
         const lastL = word.slice(-1);
         stats.hardLetterUsed[lastL] = (stats.hardLetterUsed[lastL] || 0) + 1;
@@ -618,8 +608,8 @@ function addToHistory(word) {
 
   // Update statistik
   stats.totalWordsUsed++;
-  const diff = getDifficulty(word);
-  if (diff > 0) {
+  const score = getLetterScore(word);
+  if (score >= 3) {
     stats.hardWordsUsed++;
     const lastL = word.slice(-1);
     stats.hardLetterUsed[lastL] = (stats.hardLetterUsed[lastL] || 0) + 1;

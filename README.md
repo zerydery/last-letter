@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="nexkata-logo.png" alt="nexkata" width="140" />
+  <img src="assets/img/nexkata-logo.png" alt="nexkata" width="140" />
 </p>
 
 <h1 align="center">nexkata</h1>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/words-71k%2B%20KBBI-00FFB3?style=flat-square" />
+  <img src="https://img.shields.io/badge/words-68.934%20KBBI-00FFB3?style=flat-square" />
   <img src="https://img.shields.io/badge/offline-ready-4FC3F7?style=flat-square" />
   <img src="https://img.shields.io/badge/stack-HTML%20·%20CSS%20·%20JS-B39DDB?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-FFD54F?style=flat-square" />
@@ -31,7 +31,7 @@ Type 1–4 letters and instantly get a filtered, sorted list of valid KBBI words
 | | Feature | Description |
 |---|---|---|
 | 🔍 | **Instant Search** | Real-time results as you type — no button needed |
-| 📚 | **KBBI + Proper Nouns** | Combined dataset: 71k+ words including country names (italia, belanda, jepang, etc.) |
+| 📚 | **KBBI Verified** | 68.934 clean words verified against KBBI V |
 | 🔥 | **Difficulty Ratings** | Words rated by how hard the ending letter is for your opponent |
 | ❌ | **Invalid Word Blacklist** | Mark rejected words — they'll never appear again |
 | 💾 | **Persistent Session** | Used words saved in localStorage across refreshes |
@@ -67,27 +67,20 @@ Every word card shows how hard its ending letter is for your opponent to counter
 
 ---
 
-## Tech Stack
-
-Zero dependencies. No build step. Pure browser.
+## Project Structure
 
 ```
 nexkata/
 ├── assets/
-│   ├── css/
-│   │   └── style.css       # Dark glassmorphism UI
-│   ├── js/
-│   │   └── app.js          # Game logic, search, statistics
-│   └── img/
-│       └── nexkata-logo.png  # App logo (favicon + header)
+│   ├── css/style.css           # Dark glassmorphism UI
+│   ├── js/app.js               # Game logic, search, statistics
+│   └── img/nexkata-logo.png    # App logo
 ├── data/
-│   └── words.js            # Combined KBBI dataset — 71k+ words
+│   └── words.js                # KBBI dataset — 68.934 verified words
 ├── scripts/
-│   ├── build-words.js      # CLI: rebuild words.js from words.txt
-│   ├── build-kbbi2.js      # CLI: rebuild from kbbi_kata.txt source
-│   └── build-combined.js   # CLI: merge kbbi1 + kbbi2 into words.js
-├── index.html              # App shell
-├── netlify.toml            # Deploy config with security headers
+│   └── build-verified.js       # CLI: rebuild words.js from KBBI V sources
+├── index.html                  # App shell
+├── netlify.toml                # Deploy config with security headers
 ├── README.md
 └── LICENSE
 ```
@@ -108,8 +101,11 @@ open index.html         # macOS / Linux
 To rebuild the word dataset:
 
 ```bash
-# Requires source files: words.txt + kbbi_kata.txt (not in repo — download separately)
-node scripts/build-combined.js  # merge both sources into data/words.js
+# Requires source files (not in repo — download separately):
+# - kbbi_v.csv       (KBBI V official)
+# - kbbi_v_part*.json
+# - kbbi_hidayat.csv
+node scripts/build-verified.js
 ```
 
 ---
@@ -126,14 +122,16 @@ Static site — works anywhere:
 
 ## Dataset
 
-The word database (`words.js`) is a combined dataset from two KBBI sources:
+The word database (`data/words.js`) contains **68.934 clean words** verified against the official KBBI V:
 
-| Source | Words | Notes |
-|---|---|---|
-| [damzaky/kumpulan-kata-bahasa-indonesia-KBBI](https://github.com/damzaky/kumpulan-kata-bahasa-indonesia-KBBI) | ~71k | Broad KBBI wordlist |
-| [nandalogina/kbbi-database](https://github.com/nandalogina/kbbi-database) | ~30k | Official KBBI dump (includes proper nouns) |
+| Source | Role |
+|---|---|
+| KBBI V CSV (official) | Ground truth filter — only words present here are accepted |
+| KBBI V JSON parts 1–4 | Additional candidate words |
+| damzaky/kumpulan-kata-bahasa-indonesia-KBBI | Candidate words |
+| Hidayathamir/kbbi-dataset | Candidate words |
 
-Both are merged and deduplicated into a single `words.js` file (~78k unique words).
+Words are filtered for: minimum 3 characters, Indonesian alphabet only (a–z), no abbreviations/acronyms, at least one vowel (for words ≤5 chars).
 
 ---
 

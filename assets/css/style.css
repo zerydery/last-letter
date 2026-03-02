@@ -748,94 +748,99 @@ main.main {
   white-space: nowrap;
 }
 
-/* ---- DIFFICULTY BADGE SYSTEM ---- */
-
-/* Level 1 🔥 Sulit */
-.last-letter-badge.badge-hard-1 {
-  background: rgba(255, 183, 77, 0.18);
-  color: #ffb74d;
-  border-color: rgba(255, 183, 77, 0.35);
+/* Dual badge container */
+.badge-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.word-card.card-hard-1 {
-  border-color: rgba(255, 183, 77, 0.15);
+/* Badge 2-huruf — sedikit lebih kecil & transparan */
+.badge-2l {
+  font-size: 9px;
+  opacity: 0.82;
+  padding: 2px 5px;
 }
 
-.word-card.card-hard-1:hover {
-  border-color: rgba(255, 183, 77, 0.45);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px rgba(255, 183, 77, 0.1);
+
+/* ---- SCORE BADGE SYSTEM (⭐ berbasis data real) ---- */
+
+/* Score 1 — Normal (biru default, sudah di .last-letter-badge) */
+.last-letter-badge.score-1 {
+  background: rgba(79, 195, 247, 0.15);
+  color: var(--neon-blue);
+  border-color: rgba(79, 195, 247, 0.25);
 }
 
-/* Level 2 🔥🔥 Sangat Sulit */
-.last-letter-badge.badge-hard-2 {
+/* Score 2 — Lumayan (hijau) */
+.last-letter-badge.score-2 {
+  background: rgba(0, 255, 179, 0.12);
+  color: var(--neon-green);
+  border-color: rgba(0, 255, 179, 0.28);
+}
+
+.word-card.score-2 {
+  border-color: rgba(0, 255, 179, 0.12);
+}
+
+.word-card.score-2:hover {
+  border-color: rgba(0, 255, 179, 0.35);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 12px rgba(0, 255, 179, 0.1);
+}
+
+/* Score 3 — Sulit (kuning) */
+.last-letter-badge.score-3 {
+  background: rgba(255, 213, 79, 0.18);
+  color: #ffd54f;
+  border-color: rgba(255, 213, 79, 0.35);
+}
+
+.word-card.score-3 {
+  border-color: rgba(255, 213, 79, 0.15);
+}
+
+.word-card.score-3:hover {
+  border-color: rgba(255, 213, 79, 0.45);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px rgba(255, 213, 79, 0.12);
+}
+
+/* Score 4 — Sangat Sulit (oranye–merah) */
+.last-letter-badge.score-4 {
   background: rgba(255, 107, 107, 0.18);
   color: var(--neon-red);
   border-color: rgba(255, 107, 107, 0.35);
-  animation: hardPulse 2.5s ease-in-out infinite;
+  animation: scorePulse4 2.5s ease-in-out infinite;
 }
 
-.word-card.card-hard-2 {
+.word-card.score-4 {
   border-color: rgba(255, 107, 107, 0.15);
 }
 
-.word-card.card-hard-2:hover {
+.word-card.score-4:hover {
   border-color: rgba(255, 107, 107, 0.45);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 14px rgba(255, 107, 107, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 16px rgba(255, 107, 107, 0.15);
 }
 
-/* Level 3 🔥🔥🔥 Ekstrem */
-.last-letter-badge.badge-hard-3 {
-  background: rgba(180, 0, 255, 0.2);
+/* Score 5 — Jebakan! (ungu, pulse kuat) */
+.last-letter-badge.score-5 {
+  background: rgba(180, 0, 255, 0.22);
   color: #d481ff;
-  border-color: rgba(180, 0, 255, 0.4);
-  animation: extremePulse 1.5s ease-in-out infinite;
+  border-color: rgba(180, 0, 255, 0.45);
+  animation: scorePulse5 1.4s ease-in-out infinite;
 }
 
-.word-card.card-hard-3 {
-  border-color: rgba(180, 0, 255, 0.15);
+.word-card.score-5 {
+  border-color: rgba(180, 0, 255, 0.18);
+  background: linear-gradient(135deg, var(--bg-card), rgba(180, 0, 255, 0.04));
 }
 
-.word-card.card-hard-3:hover {
-  border-color: rgba(180, 0, 255, 0.5);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 18px rgba(180, 0, 255, 0.2);
+.word-card.score-5:hover {
+  border-color: rgba(180, 0, 255, 0.55);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 22px rgba(180, 0, 255, 0.25);
 }
 
-/* Level 4 💀 Mustahil */
-.last-letter-badge.badge-hard-4 {
-  background: rgba(200, 0, 0, 0.25);
-  color: #ff5252;
-  border-color: rgba(200, 0, 0, 0.5);
-  animation: impossiblePulse 1s ease-in-out infinite;
-  font-size: 9px;
-  letter-spacing: 0;
-}
-
-.word-card.card-hard-4 {
-  border-color: rgba(200, 0, 0, 0.2);
-  background: linear-gradient(135deg, var(--bg-card), rgba(200, 0, 0, 0.04));
-}
-
-.word-card.card-hard-4:hover {
-  border-color: rgba(200, 0, 0, 0.6);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 24px rgba(200, 0, 0, 0.25);
-}
-
-@keyframes impossiblePulse {
-
-  0%,
-  100% {
-    box-shadow: none;
-    opacity: 1;
-  }
-
-  50% {
-    box-shadow: 0 0 10px 3px rgba(200, 0, 0, 0.5);
-    opacity: 0.85;
-  }
-}
-
-
-@keyframes hardPulse {
+@keyframes scorePulse4 {
 
   0%,
   100% {
@@ -847,41 +852,18 @@ main.main {
   }
 }
 
-@keyframes extremePulse {
+@keyframes scorePulse5 {
 
   0%,
   100% {
     box-shadow: none;
+    opacity: 1;
   }
 
   50% {
-    box-shadow: 0 0 8px 3px rgba(180, 0, 255, 0.4);
+    box-shadow: 0 0 10px 4px rgba(180, 0, 255, 0.45);
+    opacity: 0.9;
   }
-}
-
-/* Difficulty filter chip color overrides */
-.filter-chip.diff-1.active {
-  background: rgba(255, 183, 77, 0.2);
-  border-color: rgba(255, 183, 77, 0.5);
-  color: #ffb74d;
-}
-
-.filter-chip.diff-2.active {
-  background: rgba(255, 107, 107, 0.2);
-  border-color: rgba(255, 107, 107, 0.5);
-  color: var(--neon-red);
-}
-
-.filter-chip.diff-3.active {
-  background: rgba(180, 0, 255, 0.2);
-  border-color: rgba(180, 0, 255, 0.5);
-  color: #d481ff;
-}
-
-.filter-chip.diff-4.active {
-  background: rgba(200, 0, 0, 0.2);
-  border-color: rgba(200, 0, 0, 0.55);
-  color: #ff5252;
 }
 
 .copy-hint {
