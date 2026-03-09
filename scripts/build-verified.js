@@ -139,12 +139,32 @@ const rejected = candidates.size - verified.length;
 console.log(`  ✅ Lolos filter KBBI: ${verified.length.toLocaleString('id-ID')} kata`);
 console.log(`  ❌ Dibuang (tidak ada di KBBI): ${rejected.toLocaleString('id-ID')} kata`);
 
-// ── 5. Output ─────────────────────────────────────────────────────────────────
+// ── 5. Bypassing KBBI: Tambahkan kata-kata khusus (custom_roblox_words.txt) ─────────────
+console.log('\n➕ Menambahkan kata-kata khusus (bypass filter KBBI)...');
+const customPath = path.join(ROOT, 'custom_roblox_words.txt');
+let customAdded = 0;
+if (fs.existsSync(customPath)) {
+    fs.readFileSync(customPath, 'utf8').split('\n').forEach(line => {
+        const w = clean(line);
+        // Validasi format saja, lalu langsung masukkan ke diverifikasi meskipun tidak ada di KBBI
+        if (/^[a-z]{3,}$/.test(w) && !/^(.)\1+$/.test(w)) { // Cek abjad saja
+            if (!verified.includes(w)) {
+                verified.push(w);
+                customAdded++;
+            }
+        }
+    });
+    // Sort ulang verified karena kita baru menambahkan element baru di akhir
+    verified.sort();
+}
+console.log(`  🚀 Berhasil bypass KBBI: ${customAdded.toLocaleString('id-ID')} kata ditambahkan!`);
+
+// ── 6. Output ─────────────────────────────────────────────────────────────────
 const output = `window.KBBI_WORDS=${JSON.stringify(verified)};`;
 fs.writeFileSync(path.join(ROOT, 'data', 'words.js'), output, 'utf8');
 console.log(`\n✅ data/words.js: ${verified.length.toLocaleString('id-ID')} kata — ${(output.length / 1024 / 1024).toFixed(2)} MB`);
 
-// ── 6. Spot-check ─────────────────────────────────────────────────────────────
+// ── 7. Spot-check ─────────────────────────────────────────────────────────────
 console.log('\n🧪 Spot check — kata palsu HARUS absent:');
 const vSet = new Set(verified);
 const palsu = ['aa', 'ab', 'ac', 'ao', 'aal', 'aan', 'aau', 'apm', 'drakor', 'jomblo', 'ngebut', 'ngobrol', 'bucin'];
@@ -153,5 +173,9 @@ palsu.forEach(w => console.log(`  ${!vSet.has(w) ? '✅ absent' : '❌ MASIH ADA
 console.log('\n🧪 Spot check — kata valid HARUS ada:');
 const valid = ['abadi', 'zakat', 'adaptasi', 'inovasi', 'zonasi', 'italia', 'koordinasi', 'mobilisasi', 'takwa', 'alam'];
 valid.forEach(w => console.log(`  ${vSet.has(w) ? '✅ ada' : '❌ HILANG!'} "${w}"`));
+
+console.log('\n🧪 Spot check — kata khusus dari custom_roblox_words.txt HARUS ada:');
+const customCheck = ['xiaomi', 'echinosorex', 'bodrex', 'komix', 'maxima'];
+customCheck.forEach(w => console.log(`  ${vSet.has(w) ? '✅ ada (bypassed)' : '❌ HILANG!'} "${w}"`));
 
 console.log('\nDONE ✅');
